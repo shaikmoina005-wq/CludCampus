@@ -1,0 +1,36 @@
+name: cludcampus
+description: CludCampus — college companion Android MVP for Indian degree campuses.
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.13.4
+
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons: ^1.0.8
+  flutter_riverpod: ^3.4.3
+  go_router: ^18.0.1
+  google_fonts: ^8.2.1
+  shared_preferences: ^2.5.5
+  intl: ^0.20.3
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+  flutter_launcher_icons: ^0.14.4
+
+flutter_launcher_icons:
+  android: true
+  ios: false
+  image_path: assets/branding/cludcampus-logo.png
+  adaptive_icon_background: "#061433"
+  adaptive_icon_foreground: assets/branding/cludcampus-logo.png
+  min_sdk_android: 21
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/branding/
