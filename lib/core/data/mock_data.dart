@@ -45,9 +45,9 @@ class MockData {
     ),
   ];
 
-  /// Enrolled campus identities. Each profile has its own local OTP.
-  /// Those codes stay off the login screen; sign-in matches the mobile
-  /// to the person, then checks that person's code.
+  /// Enrolled campus identities. Phone Auth will only text one of these
+  /// numbers. The `otp` field is a debug/test code and stays off the login
+  /// screen. Release builds do not accept it.
   static const demoRoles = <DemoRoleProfile>[
     DemoRoleProfile(
       name: 'Eshu Sahana',

@@ -9,6 +9,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'support/roster_phone_auth_fake.dart';
+
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
@@ -56,7 +58,10 @@ void main() {
     addTearDown(tester.view.resetDevicePixelRatio);
 
     await tester.pumpWidget(
-      ProviderScope(child: MaterialApp.router(routerConfig: harness())),
+      ProviderScope(
+        overrides: [rosterPhoneAuthOverride()],
+        child: MaterialApp.router(routerConfig: harness()),
+      ),
     );
     await tester.pump();
   }
@@ -65,8 +70,10 @@ void main() {
     await tester.enterText(find.byType(TextField).at(0), mobile);
     await tester.tap(find.text('Send OTP'));
     await tester.pump();
+    await tester.pump();
     await tester.enterText(find.byType(TextField).at(1), otp);
     await tester.tap(find.text('Verify & continue'));
+    await tester.pump();
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 400));
   }
@@ -77,6 +84,7 @@ void main() {
     await pumpLogin(tester);
     await tester.enterText(find.byType(TextField).at(0), '9876543210');
     await tester.tap(find.text('Send OTP'));
+    await tester.pump();
     await tester.pump();
 
     expect(find.text('This mobile number is not enrolled.'), findsOneWidget);
@@ -90,9 +98,11 @@ void main() {
     await tester.enterText(find.byType(TextField).at(0), '9876504001');
     await tester.tap(find.text('Send OTP'));
     await tester.pump();
+    await tester.pump();
     expect(find.textContaining('040001'), findsNothing);
     await tester.enterText(find.byType(TextField).at(1), '010001');
     await tester.tap(find.text('Verify & continue'));
+    await tester.pump();
     await tester.pump();
 
     expect(find.text('That OTP does not match this number.'), findsOneWidget);
@@ -229,7 +239,10 @@ void main() {
     expect(find.textContaining('Dr Ramchand Kolasani'), findsWidgets);
 
     await tester.pumpWidget(
-      const ProviderScope(child: MaterialApp(home: HomeScreen())),
+      ProviderScope(
+        overrides: [rosterPhoneAuthOverride()],
+        child: const MaterialApp(home: HomeScreen()),
+      ),
     );
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 100));

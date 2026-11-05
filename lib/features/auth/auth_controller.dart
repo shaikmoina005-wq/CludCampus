@@ -3,6 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../core/data/mock_data.dart';
 import '../../core/models/models.dart';
+import 'auth_repository.dart';
 
 class AuthState {
   const AuthState({
@@ -86,6 +87,34 @@ class AuthController extends Notifier<AuthState> {
     );
   }
 
+  /// Enrollment gate, then Firebase SMS (or the debug roster fallback).
+  Future<OtpRequestResult> requestOtp(
+    String rawMobile, {
+    int? forceResendingToken,
+  }) async {
+    final result = await ref
+        .read(authRepositoryProvider)
+        .requestOtp(rawMobile, forceResendingToken: forceResendingToken);
+    if (result is OtpAutoSignedIn) {
+      await loginAsEnrolled(result.profile);
+    }
+    return result;
+  }
+
+  /// Checks the SMS code with Firebase. A match opens that person's role.
+  Future<OtpVerifyResult> verifyOtp({
+    required OtpSession session,
+    required String code,
+  }) async {
+    final result = await ref
+        .read(authRepositoryProvider)
+        .verifyOtp(session: session, code: code);
+    if (result is OtpVerified) {
+      await loginAsEnrolled(result.profile);
+    }
+    return result;
+  }
+
   /// Opens the session for an enrolled student or staff profile.
   /// The mobile number has already selected this person and role.
   Future<void> loginAsEnrolled(DemoRoleProfile profile) async {
@@ -110,6 +139,11 @@ class AuthController extends Notifier<AuthState> {
 
   Future<void> logout() async {
     _session++;
+    try {
+      await ref.read(phoneAuthClientProvider).signOut();
+    } catch (_) {
+      // The campus session still ends when Firebase is unavailable.
+    }
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(_kLoggedIn, false);
     await prefs.remove(_kRole);

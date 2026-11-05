@@ -8,6 +8,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'support/roster_phone_auth_fake.dart';
+
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
@@ -89,7 +91,12 @@ void main() {
     'principal and HOD review lists, without student attendance or fees',
     (tester) async {
       usePhone(tester);
-      await tester.pumpWidget(const ProviderScope(child: CludCampusApp()));
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [rosterPhoneAuthOverride()],
+          child: const CludCampusApp(),
+        ),
+      );
       await tester.pump();
       await tester.pump(const Duration(seconds: 3));
       await tester.pump(const Duration(milliseconds: 400));
@@ -98,8 +105,10 @@ void main() {
         await tester.enterText(find.byType(TextField).at(0), mobile);
         await tester.tap(find.text('Send OTP'));
         await tester.pump();
+        await tester.pump();
         await tester.enterText(find.byType(TextField).at(1), otp);
         await tester.tap(find.text('Verify & continue'));
+        await tester.pump();
         await tester.pump();
         await tester.pump(const Duration(milliseconds: 400));
       }
