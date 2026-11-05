@@ -7,6 +7,7 @@ import '../../core/data/mock_data.dart';
 import '../../core/models/models.dart';
 import '../../core/theme/theme_controller.dart';
 import '../../core/widgets/app_page_header.dart';
+import '../../core/widgets/full_name_text.dart';
 import '../../core/widgets/soft_card.dart';
 import '../auth/auth_controller.dart';
 
@@ -54,11 +55,12 @@ class ProfileScreen extends ConsumerWidget {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(
+                              FullNameText(
                                 student.name,
                                 style: GoogleFonts.inter(
                                   fontSize: 19,
                                   fontWeight: FontWeight.w700,
+                                  height: 1.25,
                                   color: navy,
                                 ),
                               ),

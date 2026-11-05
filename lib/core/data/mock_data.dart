@@ -98,7 +98,7 @@ class MockData {
   ];
 
   static const student = StudentProfile(
-    name: 'Priya Reddy',
+    name: 'Priya Venkata Lakshmi Reddy',
     rollNo: 'Y21CS045',
     college: 'ASN Degree College, Tenali',
     collegeCode: 'ASN-TNL',
@@ -860,24 +860,12 @@ class MockData {
     ),
   ];
 
-  static final calendarHighlights = <CalendarDayInfo>[
-    CalendarDayInfo(
-      date: DateTime(2026, 9, 21),
-      label: 'Regular classwork',
-    ),
-    CalendarDayInfo(
-      date: DateTime(2026, 9, 14),
-      label: 'Holiday — Second Saturday',
-      isHoliday: true,
-    ),
-    CalendarDayInfo(
-      date: DateTime(2026, 8, 26),
-      label: 'Holiday — Vinayaka Chavithi',
-      isHoliday: true,
-    ),
+  /// Campus reminders that are not public holidays. Lectures come from the
+  /// timetable. Gazetted holidays live in the India public-holiday list.
+  static final academicReminders = <CalendarDayInfo>[
     CalendarDayInfo(
       date: DateTime(2026, 9, 15),
-      label: 'I Internals begin',
+      label: 'Internal exams begin',
       hasReminder: true,
     ),
   ];
