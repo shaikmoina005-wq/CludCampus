@@ -1,16 +1,25 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/data/mock_data.dart';
 import '../../core/models/models.dart';
-import '../../core/widgets/section_header.dart';
-import '../../core/widgets/stat_card.dart';
+import '../../core/widgets/app_page_header.dart';
+import '../../core/widgets/soft_card.dart';
 import '../auth/auth_controller.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
+
+  DemoRoleProfile? _demoProfile(String demoName) {
+    if (demoName.isEmpty) return null;
+    for (final r in MockData.demoRoles) {
+      if (r.name == demoName) return r;
+    }
+    return null;
+  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -19,268 +28,556 @@ class HomeScreen extends ConsumerWidget {
     final attendance = MockData.attendance;
     final today = MockData.todayClasses();
     final notices = MockData.notices.take(3).toList();
-    final hour = DateTime.now().hour;
-    final greet = hour < 12
-        ? 'Good morning'
-        : hour < 17
-            ? 'Good afternoon'
-            : 'Good evening';
+    final greeting = MockData.timeGreeting();
+    final demoProfile = _demoProfile(auth.demoName);
+    final displayName = auth.demoName.isNotEmpty ? auth.demoName : student.name;
+    final firstName = displayName.split(' ').first;
+    final collegeName = auth.collegeName.isNotEmpty
+        ? auth.collegeName
+        : student.college;
+    final dateLine = DateFormat('EEEE, d MMMM').format(DateTime.now());
+    final pct = attendance.overallPercent.round();
+
+    final navy = AppColors.primaryTextOf(context);
+    final muted = AppColors.mutedTextOf(context);
+    final faint = AppColors.faintTextOf(context);
+    final isDark = AppColors.isDark(context);
 
     return Scaffold(
-      body: CustomScrollView(
-        slivers: [
-          SliverAppBar(
-            expandedHeight: 150,
-            pinned: true,
-            backgroundColor: AppColors.navy,
-            flexibleSpace: FlexibleSpaceBar(
-              background: Container(
-                color: AppColors.navy,
-                padding: const EdgeInsets.fromLTRB(20, 56, 20, 20),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
+      backgroundColor: AppColors.scaffoldOf(context),
+      body: SafeArea(
+        bottom: false,
+        child: CustomScrollView(
+          slivers: [
+            const SliverToBoxAdapter(child: AppPageHeader()),
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(20, 16, 20, 28),
+              sliver: SliverList(
+                delegate: SliverChildListDelegate([
+                  Text(
+                    collegeName.toUpperCase(),
+                    style: GoogleFonts.inter(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: 0.6,
+                      color: faint,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    '$greeting, $firstName',
+                    style: GoogleFonts.inter(
+                      fontSize: 24,
+                      fontWeight: FontWeight.w500,
+                      letterSpacing: -0.4,
+                      color: navy,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    '$dateLine · ${demoProfile?.detail ?? '${student.branch} · ${student.year}'}',
+                    style: GoogleFonts.inter(
+                      fontSize: 13,
+                      color: muted,
+                      fontWeight: FontWeight.w400,
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+
+                  // Attendance + Fee due (demo side-by-side)
+                  IntrinsicHeight(
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        Image.asset(
-                          'assets/branding/cludcampus-logo.png',
-                          height: 28,
-                          color: Colors.white,
-                          colorBlendMode: BlendMode.srcATop,
-                          errorBuilder: (context, error, stackTrace) => const SizedBox(),
+                        Expanded(
+                          child: SoftCard(
+                            onTap: () => context.go('/attendance'),
+                            padding: const EdgeInsets.all(14),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    SizedBox(
+                                      width: 56,
+                                      height: 56,
+                                      child: CustomPaint(
+                                        painter: _RingPainter(
+                                          progress:
+                                              attendance.overallPercent / 100,
+                                          color: AppColors.attendanceGreen,
+                                          trackColor: isDark
+                                              ? AppColors.darkElevated
+                                              : AppColors.elevated,
+                                        ),
+                                        child: Center(
+                                          child: Text(
+                                            '$pct%',
+                                            style: GoogleFonts.inter(
+                                              fontSize: 14,
+                                              fontWeight: FontWeight.w600,
+                                              color: AppColors.attendanceGreen,
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 10),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            'Overall attendance',
+                                            style: GoogleFonts.inter(
+                                              fontSize: 12,
+                                              color: muted,
+                                              fontWeight: FontWeight.w500,
+                                            ),
+                                          ),
+                                          const SizedBox(height: 4),
+                                          Text(
+                                            '${attendance.overallPresent}/${attendance.overallTotal} hours',
+                                            style: GoogleFonts.inter(
+                                              fontSize: 14,
+                                              fontWeight: FontWeight.w600,
+                                              color: navy,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 10),
+                                Text(
+                                  'Above the 75% ANU minimum',
+                                  style: GoogleFonts.inter(
+                                    fontSize: 11,
+                                    color: faint,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
                         ),
-                        const Spacer(),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 10,
-                            vertical: 4,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.15),
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: Text(
-                            auth.role.label,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: SoftCard(
+                            onTap: () => context.push('/more/fees'),
+                            padding: const EdgeInsets.all(14),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Fee due',
+                                  style: GoogleFonts.inter(
+                                    fontSize: 12,
+                                    color: muted,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                                const SizedBox(height: 6),
+                                Text(
+                                  '₹${MockData.examFeeAmount.toStringAsFixed(0).replaceAllMapped(RegExp(r'(\d)(?=(\d{3})+(?!\d))'), (m) => '${m[1]},')}',
+                                  style: GoogleFonts.inter(
+                                    fontSize: 26,
+                                    fontWeight: FontWeight.w600,
+                                    letterSpacing: -0.5,
+                                    color: navy,
+                                  ),
+                                ),
+                                const Spacer(),
+                                const SizedBox(height: 10),
+                                SizedBox(
+                                  width: double.infinity,
+                                  child: FilledButton(
+                                    onPressed: () =>
+                                        context.push('/more/fees'),
+                                    style: FilledButton.styleFrom(
+                                      minimumSize: const Size.fromHeight(40),
+                                      padding: const EdgeInsets.symmetric(
+                                        vertical: 10,
+                                      ),
+                                      textStyle: GoogleFonts.inter(
+                                        fontWeight: FontWeight.w600,
+                                        fontSize: 13,
+                                      ),
+                                    ),
+                                    child: const Text('Pay now'),
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
                         ),
                       ],
                     ),
-                    const Spacer(),
-                    Text(
-                      '$greet, ${student.name.split(' ').first}',
-                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w800,
+                  ),
+                  const SizedBox(height: 12),
+
+                  // Recognition
+                  SoftCard(
+                    onTap: () => context.push('/more/awards'),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'RECOGNITION',
+                          style: GoogleFonts.inter(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                            letterSpacing: 0.6,
+                            color: faint,
                           ),
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          MockData.recognitionTitle,
+                          style: GoogleFonts.inter(
+                            fontSize: 17,
+                            fontWeight: FontWeight.w600,
+                            color: navy,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          MockData.recognitionPeriod,
+                          style: GoogleFonts.inter(
+                            fontSize: 13,
+                            color: muted,
+                          ),
+                        ),
+                      ],
                     ),
-                    const SizedBox(height: 4),
-                    Text(
-                      '${student.branch} · ${student.year} · ${student.section}',
-                      style: const TextStyle(color: Colors.white70, fontSize: 13),
+                  ),
+                  const SizedBox(height: 12),
+
+                  // Friday Skill
+                  SoftCard(
+                    accentLeft: true,
+                    onTap: () => context.push('/more/friday-skill'),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Text(
+                              'FRIDAY SKILL',
+                              style: GoogleFonts.inter(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600,
+                                letterSpacing: 0.6,
+                                color: faint,
+                              ),
+                            ),
+                            const Spacer(),
+                            Text(
+                              MockData.fridaySkillTime,
+                              style: GoogleFonts.inter(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w500,
+                                color: faint,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          MockData.fridaySkillTitle,
+                          style: GoogleFonts.inter(
+                            fontSize: 17,
+                            fontWeight: FontWeight.w600,
+                            color: navy,
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          MockData.fridaySkillMeta,
+                          style: GoogleFonts.inter(
+                            fontSize: 12,
+                            color: muted,
+                          ),
+                        ),
+                      ],
                     ),
-                  ],
-                ),
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Feedback CTA — muted secondary like demo
+                  SizedBox(
+                    width: double.infinity,
+                    child: FilledButton(
+                      onPressed: () => context.push('/staff-feedback'),
+                      style: FilledButton.styleFrom(
+                        backgroundColor: isDark
+                            ? AppColors.darkElevated
+                            : const Color(0xFF8A9BB0),
+                        foregroundColor: Colors.white,
+                      ),
+                      child: const Text('Give class feedback'),
+                    ),
+                  ),
+                  const SizedBox(height: 28),
+
+                  // Today
+                  Row(
+                    children: [
+                      Text(
+                        'Today',
+                        style: GoogleFonts.inter(
+                          fontSize: 20,
+                          fontWeight: FontWeight.w600,
+                          color: navy,
+                        ),
+                      ),
+                      const Spacer(),
+                      TextButton(
+                        onPressed: () => context.go('/timetable'),
+                        child: Text(
+                          'Week ›',
+                          style: GoogleFonts.inter(
+                            fontWeight: FontWeight.w600,
+                            color: muted,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  SoftCard(
+                    child: today.isEmpty
+                        ? Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            child: Center(
+                              child: Text(
+                                'No class periods today.',
+                                style: GoogleFonts.inter(
+                                  color: muted,
+                                  fontSize: 14,
+                                ),
+                              ),
+                            ),
+                          )
+                        : Column(
+                            children: [
+                              for (var i = 0; i < today.length; i++) ...[
+                                if (i > 0)
+                                  Divider(
+                                    height: 20,
+                                    color: AppColors.dividerOf(context),
+                                  ),
+                                _TodayRow(slot: today[i]),
+                              ],
+                            ],
+                          ),
+                  ),
+                  const SizedBox(height: 28),
+
+                  // Notices
+                  Row(
+                    children: [
+                      Text(
+                        'Notices',
+                        style: GoogleFonts.inter(
+                          fontSize: 20,
+                          fontWeight: FontWeight.w600,
+                          color: navy,
+                        ),
+                      ),
+                      const Spacer(),
+                      TextButton(
+                        onPressed: () => context.go('/notices'),
+                        child: Text(
+                          'View ›',
+                          style: GoogleFonts.inter(
+                            fontWeight: FontWeight.w600,
+                            color: muted,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  SoftCard(
+                    padding: EdgeInsets.zero,
+                    child: Column(
+                      children: [
+                        for (var i = 0; i < notices.length; i++) ...[
+                          if (i > 0)
+                            Divider(
+                              height: 1,
+                              color: AppColors.dividerOf(context),
+                            ),
+                          _NoticeRow(
+                            notice: notices[i],
+                            onTap: () =>
+                                context.push('/notices/${notices[i].id}'),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                ]),
               ),
             ),
-          ),
-          SliverPadding(
-            padding: const EdgeInsets.all(16),
-            sliver: SliverList(
-              delegate: SliverChildListDelegate([
-                Row(
-                  children: [
-                    Expanded(
-                      child: StatCard(
-                        label: 'Attendance',
-                        value:
-                            '${attendance.overallPercent.toStringAsFixed(1)}%',
-                        subtitle:
-                            '${attendance.overallPresent}/${attendance.overallTotal} classes',
-                        color: attendance.overallPercent >= 75
-                            ? AppColors.success
-                            : AppColors.warning,
-                        icon: Icons.fact_check_rounded,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: StatCard(
-                        label: 'Today',
-                        value: '${today.length}',
-                        subtitle: today.isEmpty ? 'No classes' : 'classes',
-                        color: AppColors.accent,
-                        icon: Icons.schedule_rounded,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 24),
-                SectionHeader(
-                  title: "Today's classes",
-                  actionLabel: 'Timetable',
-                  onAction: () => context.go('/timetable'),
-                ),
-                if (today.isEmpty)
-                  Card(
-                    child: Padding(
-                      padding: const EdgeInsets.all(20),
-                      child: Text(
-                        'No classes scheduled for ${DateFormat('EEEE').format(DateTime.now())}. Enjoy the break!',
-                        style: const TextStyle(color: AppColors.textSecondary),
-                      ),
-                    ),
-                  )
-                else
-                  ...today.map((c) => _ClassTile(slot: c)),
-                const SizedBox(height: 24),
-                SectionHeader(
-                  title: 'Quick actions',
-                ),
-                _QuickActions(),
-                const SizedBox(height: 24),
-                SectionHeader(
-                  title: 'Notices',
-                  actionLabel: 'See all',
-                  onAction: () => context.push('/notices'),
-                ),
-                ...notices.map(
-                  (n) => _NoticePreview(
-                    notice: n,
-                    onTap: () => context.push('/notices/${n.id}'),
-                  ),
-                ),
-                const SizedBox(height: 24),
-              ]),
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
 }
 
-class _ClassTile extends StatelessWidget {
-  const _ClassTile({required this.slot});
+class _TodayRow extends StatelessWidget {
+  const _TodayRow({required this.slot});
   final ClassSlot slot;
+
+  String get _ampm {
+    final parts = slot.startTime.split(':');
+    final h = int.tryParse(parts[0]) ?? 0;
+    final m = parts.length > 1 ? parts[1] : '00';
+    final suffix = h >= 12 ? 'pm' : 'am';
+    final h12 = h == 0 ? 12 : (h > 12 ? h - 12 : h);
+    return '$h12:${m.padLeft(2, '0')} $suffix';
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      margin: const EdgeInsets.only(bottom: 10),
-      child: ListTile(
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        leading: Container(
-          width: 52,
-          padding: const EdgeInsets.symmetric(vertical: 8),
-          decoration: BoxDecoration(
-            color: AppColors.accent.withValues(alpha: 0.1),
-            borderRadius: BorderRadius.circular(12),
-          ),
+    final navy = AppColors.primaryTextOf(context);
+    final muted = AppColors.mutedTextOf(context);
+    return Row(
+      children: [
+        Expanded(
           child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                slot.startTime,
-                style: const TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.accent,
+                slot.subject,
+                style: GoogleFonts.inter(
+                  fontWeight: FontWeight.w600,
+                  color: navy,
                 ),
               ),
+              const SizedBox(height: 2),
               Text(
-                slot.endTime,
-                style: const TextStyle(fontSize: 10, color: AppColors.textSecondary),
+                '${slot.room} · ${slot.faculty}',
+                style: GoogleFonts.inter(
+                  fontSize: 12,
+                  color: muted,
+                ),
               ),
             ],
           ),
         ),
-        title: Text(
-          slot.subject,
-          style: const TextStyle(fontWeight: FontWeight.w700),
+        Text(
+          _ampm,
+          style: GoogleFonts.inter(
+            fontSize: 13,
+            fontWeight: FontWeight.w500,
+            color: muted,
+          ),
         ),
-        subtitle: Text('${slot.faculty} · ${slot.room}'),
-        trailing: Chip(label: Text(slot.code)),
-      ),
+      ],
     );
   }
 }
 
-class _QuickActions extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    final items = [
-      (Icons.payments_outlined, 'Fees', '/fees'),
-      (Icons.campaign_outlined, 'Notices', '/notices'),
-      (Icons.psychology_outlined, 'Friday Skill', '/friday-skill'),
-      (Icons.event_busy_outlined, 'Leave', '/leave'),
-      (Icons.emoji_events_outlined, 'Awards', '/awards'),
-      (Icons.person_outline, 'Profile', '/profile'),
-    ];
-    return GridView.count(
-      crossAxisCount: 3,
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      mainAxisSpacing: 10,
-      crossAxisSpacing: 10,
-      childAspectRatio: 1.05,
-      children: items
-          .map(
-            (e) => InkWell(
-              onTap: () => context.push(e.$3),
-              borderRadius: BorderRadius.circular(16),
-              child: Card(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(e.$1, color: AppColors.accent, size: 26),
-                    const SizedBox(height: 8),
-                    Text(
-                      e.$2,
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          )
-          .toList(),
-    );
-  }
-}
-
-class _NoticePreview extends StatelessWidget {
-  const _NoticePreview({required this.notice, required this.onTap});
+class _NoticeRow extends StatelessWidget {
+  const _NoticeRow({required this.notice, required this.onTap});
   final Notice notice;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      margin: const EdgeInsets.only(bottom: 10),
-      child: ListTile(
-        onTap: onTap,
-        title: Text(
-          notice.title,
-          maxLines: 2,
-          overflow: TextOverflow.ellipsis,
-          style: const TextStyle(fontWeight: FontWeight.w600),
+    final navy = AppColors.primaryTextOf(context);
+    final muted = AppColors.mutedTextOf(context);
+    final faint = AppColors.faintTextOf(context);
+    return InkWell(
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+              decoration: BoxDecoration(
+                color: AppColors.pillBgOf(context),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Text(
+                notice.category.toUpperCase(),
+                style: GoogleFonts.inter(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 0.4,
+                  color: muted,
+                ),
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              notice.title,
+              style: GoogleFonts.inter(
+                fontWeight: FontWeight.w600,
+                fontSize: 15,
+                color: navy,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              DateFormat('d MMM yyyy').format(notice.postedAt),
+              style: GoogleFonts.inter(
+                fontSize: 12,
+                color: faint,
+              ),
+            ),
+          ],
         ),
-        subtitle: Text(
-          '${notice.category} · ${DateFormat('d MMM').format(notice.postedAt)}',
-        ),
-        trailing: notice.pinned
-            ? const Icon(Icons.push_pin, size: 16, color: AppColors.accent)
-            : const Icon(Icons.chevron_right),
       ),
     );
   }
+}
+
+class _RingPainter extends CustomPainter {
+  _RingPainter({
+    required this.progress,
+    required this.color,
+    required this.trackColor,
+  });
+
+  final double progress;
+  final Color color;
+  final Color trackColor;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final center = Offset(size.width / 2, size.height / 2);
+    final radius = (size.shortestSide / 2) - 4;
+    final bg = Paint()
+      ..color = trackColor
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 7
+      ..strokeCap = StrokeCap.round;
+    final fg = Paint()
+      ..color = color
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 7
+      ..strokeCap = StrokeCap.round;
+
+    canvas.drawCircle(center, radius, bg);
+    canvas.drawArc(
+      Rect.fromCircle(center: center, radius: radius),
+      -1.5708,
+      6.2832 * progress.clamp(0.0, 1.0),
+      false,
+      fg,
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant _RingPainter oldDelegate) =>
+      oldDelegate.progress != progress ||
+      oldDelegate.color != color ||
+      oldDelegate.trackColor != trackColor;
 }
