@@ -136,7 +136,7 @@ class MoreScreen extends ConsumerWidget {
                                   ),
                                   const SizedBox(height: 2),
                                   Text(
-                                    'Dark mode, demo roles, sign out',
+                                    'Appearance and sign out',
                                     style: GoogleFonts.inter(
                                       fontSize: 13,
                                       color: muted,
@@ -163,7 +163,7 @@ class MoreScreen extends ConsumerWidget {
                         await ref
                             .read(authControllerProvider.notifier)
                             .logout();
-                        if (context.mounted) context.go('/cover');
+                        if (context.mounted) context.go('/login');
                       },
                       child: const Text('Logout'),
                     ),

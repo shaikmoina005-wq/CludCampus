@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'auth_controller.dart';
 
-/// Full-bleed brand cover splash — holds at least 3 seconds (matches web demo).
+/// Full-bleed brand splash, then the student home or mobile OTP login.
 class SplashScreen extends ConsumerStatefulWidget {
   const SplashScreen({super.key});
 
@@ -27,13 +27,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
       Future<void>.delayed(const Duration(milliseconds: 200), _navigate);
       return;
     }
-    if (auth.isLoggedIn) {
-      context.go('/home');
-    } else if (auth.hasCollege) {
-      context.go('/login');
-    } else {
-      context.go('/cover');
-    }
+    context.go(auth.isLoggedIn ? '/home' : '/login');
   }
 
   @override

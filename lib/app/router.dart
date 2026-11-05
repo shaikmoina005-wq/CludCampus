@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../features/attendance/attendance_screen.dart';
 import '../features/auth/auth_controller.dart';
-import '../features/auth/cover_screen.dart';
 import '../features/auth/login_screen.dart';
 import '../features/auth/splash_screen.dart';
 import '../features/awards/awards_screen.dart';
@@ -31,35 +30,33 @@ import '../features/timetable/timetable_screen.dart';
 final _rootKey = GlobalKey<NavigatorState>();
 
 final routerProvider = Provider<GoRouter>((ref) {
-  final auth = ref.watch(authControllerProvider);
+  final refresh = _AuthListenable(ref);
+  ref.onDispose(refresh.dispose);
 
   return GoRouter(
     navigatorKey: _rootKey,
     initialLocation: '/',
-    refreshListenable: _AuthListenable(ref),
+    refreshListenable: refresh,
     redirect: (context, state) {
+      final auth = ref.read(authControllerProvider);
       if (!auth.initialized) return null;
       final loc = state.matchedLocation;
       final onSplash = loc == '/';
-      final onCover = loc == '/cover';
       final onLogin = loc == '/login';
-      final onAuthFlow = onSplash || onCover || onLogin;
+      final onCover = loc == '/cover';
+      final onAuthFlow = onSplash || onLogin || onCover;
 
       if (!auth.isLoggedIn) {
-        if (onSplash || onCover) return null;
-        if (onLogin) {
-          if (!auth.hasCollege) return '/cover';
-          return null;
-        }
-        return auth.hasCollege ? '/login' : '/cover';
+        if (onSplash || onLogin) return null;
+        return '/login';
       }
 
-      if (auth.isLoggedIn && onAuthFlow) return '/home';
+      if (onAuthFlow) return '/home';
       return null;
     },
     routes: [
       GoRoute(path: '/', builder: (_, __) => const SplashScreen()),
-      GoRoute(path: '/cover', builder: (_, __) => const CoverScreen()),
+      GoRoute(path: '/cover', redirect: (_, _) => '/login'),
       GoRoute(path: '/login', builder: (_, __) => const LoginScreen()),
       StatefulShellRoute.indexedStack(
         builder: (context, state, navigationShell) =>

@@ -5,7 +5,6 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/data/mock_data.dart';
 import '../../core/models/models.dart';
-import '../../core/settings/notification_settings_controller.dart';
 import '../../core/theme/theme_controller.dart';
 import '../../core/widgets/app_page_header.dart';
 import '../../core/widgets/soft_card.dart';
@@ -23,15 +22,6 @@ class ProfileScreen extends ConsumerWidget {
     final navy = isDark ? AppColors.darkTextPrimary : AppColors.navy;
     final muted = isDark ? AppColors.darkTextMuted : AppColors.textMuted;
     final elevated = isDark ? AppColors.darkElevated : AppColors.elevated;
-
-    Future<void> switchRole(profile) async {
-      await ref.read(authControllerProvider.notifier).loginAsDemo(profile);
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Demo switched to ${profile.name}')),
-        );
-      }
-    }
 
     return Scaffold(
       body: SafeArea(
@@ -176,92 +166,13 @@ class ProfileScreen extends ConsumerWidget {
                     ),
                   ),
                   const SizedBox(height: 24),
-                  Text(
-                    'Switch demo role',
-                    style: GoogleFonts.inter(
-                      fontWeight: FontWeight.w700,
-                      fontSize: 19,
-                      color: navy,
-                    ),
-                  ),
-                  const SizedBox(height: 5),
-                  Text(
-                    'Use this when walking a principal or office through the product.',
-                    style: GoogleFonts.inter(color: muted, height: 1.4),
-                  ),
-                  const SizedBox(height: 12),
-                  for (final profile in MockData.demoRoles)
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 9),
-                      child: SoftCard(
-                        padding: EdgeInsets.zero,
-                        onTap: () => switchRole(profile),
-                        child: ListTile(
-                          contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 14,
-                            vertical: 7,
-                          ),
-                          leading: CircleAvatar(
-                            backgroundColor: elevated,
-                            child: Text(
-                              profile.initials,
-                              style: GoogleFonts.inter(
-                                fontWeight: FontWeight.w700,
-                                color: navy,
-                              ),
-                            ),
-                          ),
-                          title: Text(
-                            profile.name,
-                            style: GoogleFonts.inter(
-                              fontWeight: FontWeight.w700,
-                              color: navy,
-                            ),
-                          ),
-                          subtitle: Text(
-                            profile.detail,
-                            style: GoogleFonts.inter(
-                              fontSize: 12,
-                              color: muted,
-                            ),
-                          ),
-                          trailing: auth.demoName == profile.name ||
-                                  (auth.demoName.isEmpty &&
-                                      profile.name == student.name)
-                              ? const Icon(
-                                  Icons.check_circle,
-                                  color: AppColors.success,
-                                )
-                              : Icon(Icons.chevron_right, color: muted),
-                        ),
-                      ),
-                    ),
-                  const SizedBox(height: 8),
                   OutlinedButton.icon(
                     onPressed: () async {
                       await ref.read(authControllerProvider.notifier).logout();
-                      if (context.mounted) context.go('/cover');
+                      if (context.mounted) context.go('/login');
                     },
                     icon: const Icon(Icons.logout),
                     label: const Text('Sign out'),
-                  ),
-                  const SizedBox(height: 10),
-                  TextButton.icon(
-                    onPressed: () async {
-                      await ref
-                          .read(notificationSettingsProvider.notifier)
-                          .reset();
-                      await ref
-                          .read(themeControllerProvider.notifier)
-                          .setThemeMode(ThemeMode.system);
-                      if (context.mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Demo data reset')),
-                        );
-                      }
-                    },
-                    icon: const Icon(Icons.restart_alt),
-                    label: const Text('Reset demo data'),
                   ),
                 ],
               ),

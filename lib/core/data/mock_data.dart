@@ -1,8 +1,6 @@
 import '../models/models.dart';
 
 class MockData {
-  static const demoOtp = '123456';
-
   static const colleges = <CollegeInfo>[
     CollegeInfo(
       name: 'ASN Degree College, Tenali',
