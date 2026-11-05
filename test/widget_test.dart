@@ -15,9 +15,7 @@ void main() {
 
   Future<void> pumpLogin(WidgetTester tester, GoRouter router) async {
     await tester.pumpWidget(
-      ProviderScope(
-        child: MaterialApp.router(routerConfig: router),
-      ),
+      ProviderScope(child: MaterialApp.router(routerConfig: router)),
     );
     await tester.pump();
   }
@@ -26,21 +24,18 @@ void main() {
     return GoRouter(
       initialLocation: '/login',
       routes: [
-        GoRoute(
-          path: '/login',
-          builder: (_, _) => const LoginScreen(),
-        ),
+        GoRoute(path: '/login', builder: (_, _) => const LoginScreen()),
         GoRoute(
           path: '/home',
-          builder: (_, _) => const Scaffold(
-            body: Text('Student home'),
-          ),
+          builder: (_, _) => const Scaffold(body: Text('Student home')),
         ),
       ],
     );
   }
 
-  testWidgets('login shows mobile OTP and hides demo shortcuts', (tester) async {
+  testWidgets('login shows mobile OTP and hides demo shortcuts', (
+    tester,
+  ) async {
     final router = loginRouter();
     await pumpLogin(tester, router);
 
@@ -62,6 +57,8 @@ void main() {
       'Eshu Sahana',
       'Priya Reddy',
       '123456',
+      '010001',
+      '040001',
       'Demo OTP',
       'demo OTP',
       'ASN Degree College',
@@ -76,16 +73,16 @@ void main() {
     final router = loginRouter();
     await pumpLogin(tester, router);
 
-    await tester.enterText(find.byType(TextField).at(0), '9876543210');
+    await tester.enterText(find.byType(TextField).at(0), '9876501001');
     await tester.tap(find.text('Send OTP'));
     await tester.pump();
 
     expect(find.textContaining('123456'), findsNothing);
     expect(find.textContaining('Demo'), findsNothing);
-    expect(find.text('OTP sent to +91 98765 43210'), findsOneWidget);
+    expect(find.text('OTP sent to +91 98765 01001'), findsOneWidget);
     expect(find.text('Verify & continue'), findsOneWidget);
 
-    await tester.enterText(find.byType(TextField).at(1), '482913');
+    await tester.enterText(find.byType(TextField).at(1), '010001');
     await tester.tap(find.text('Verify & continue'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 400));
@@ -127,13 +124,13 @@ void main() {
     expect(find.textContaining('TRY A DEMO'), findsNothing);
     expect(find.text('Select your college to continue.'), findsNothing);
 
-    await tester.enterText(find.byType(TextField).at(0), '9123456789');
+    await tester.enterText(find.byType(TextField).at(0), '9876501001');
     await tester.tap(find.text('Send OTP'));
     await tester.pump();
-    expect(find.text('OTP sent to +91 91234 56789'), findsOneWidget);
+    expect(find.text('OTP sent to +91 98765 01001'), findsOneWidget);
     expect(find.textContaining('123456'), findsNothing);
 
-    await tester.enterText(find.byType(TextField).at(1), '246810');
+    await tester.enterText(find.byType(TextField).at(1), '010001');
     await tester.tap(find.text('Verify & continue'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 500));

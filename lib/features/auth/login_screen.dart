@@ -3,14 +3,16 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
+
 import '../../core/constants/app_colors.dart';
+import '../../core/data/mock_data.dart';
 import '../../core/widgets/brand_wordmark.dart';
 import '../../core/widgets/wash_background.dart';
 import 'auth_controller.dart';
 
-/// Student sign-in: the college already enrolled the mobile number.
-/// OTP is entered here; a live SMS gateway is not wired yet, so any
-/// 6-digit code completes the local session and opens that student's home.
+/// Mobile OTP sign-in. The number must already be enrolled. There is no
+/// SMS gateway, so the code is checked on the device against that person.
+/// The screen does not list codes, roles, or other enrolled numbers.
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
 
@@ -67,6 +69,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       });
       return;
     }
+    if (MockData.profileForMobile(_mobileDigits) == null) {
+      setState(() {
+        _otpSent = false;
+        _otpMobile = '';
+        _formError = 'This mobile number is not enrolled.';
+      });
+      return;
+    }
     setState(() {
       _otpSent = true;
       _otpMobile = _mobileDigits;
@@ -97,12 +107,28 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       });
       return;
     }
+    final profile = MockData.profileForMobile(_mobileDigits);
+    if (profile == null) {
+      setState(() {
+        _loading = false;
+        _otpSent = false;
+        _formError = 'This mobile number is not enrolled.';
+      });
+      return;
+    }
+    if (!profile.acceptsOtp(otp)) {
+      setState(() {
+        _loading = false;
+        _formError = 'That OTP does not match this number.';
+      });
+      return;
+    }
     setState(() {
       _loading = true;
       _formError = null;
     });
     await Future<void>.delayed(const Duration(milliseconds: 350));
-    await ref.read(authControllerProvider.notifier).loginStudent();
+    await ref.read(authControllerProvider.notifier).loginAsEnrolled(profile);
     if (!mounted) return;
     ScaffoldMessenger.of(context).hideCurrentSnackBar();
     context.go('/home');
@@ -204,9 +230,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               ],
               const SizedBox(height: 18),
               FilledButton(
-                onPressed: _loading
-                    ? null
-                    : (_otpSent ? _verifyOtp : _sendOtp),
+                onPressed: _loading ? null : (_otpSent ? _verifyOtp : _sendOtp),
                 child: _loading
                     ? const SizedBox(
                         height: 20,
@@ -252,11 +276,7 @@ class _CountryPrefix extends StatelessWidget {
           ),
         ),
         const SizedBox(width: 10),
-        Container(
-          width: 1,
-          height: 22,
-          color: AppColors.border,
-        ),
+        Container(width: 1, height: 22, color: AppColors.border),
       ],
     );
   }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
+
 import '../constants/app_colors.dart';
 import '../data/mock_data.dart';
 import '../models/models.dart';
@@ -18,24 +19,18 @@ class CampusDrawer extends ConsumerWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final navy = isDark ? AppColors.darkTextPrimary : AppColors.navy;
     final muted = isDark ? AppColors.darkTextMuted : AppColors.textMuted;
-    final displayName =
-        auth.demoName.isNotEmpty ? auth.demoName : student.name;
-    DemoRoleProfile? demoProfile;
-    for (final r in MockData.demoRoles) {
-      if (r.name == auth.demoName) {
-        demoProfile = r;
-        break;
-      }
-    }
-    final initials = demoProfile?.initials ??
+    final displayName = auth.demoName.isNotEmpty ? auth.demoName : student.name;
+    final demoProfile = MockData.profileForDisplayName(auth.demoName);
+    final initials =
+        demoProfile?.initials ??
         (displayName == student.name
             ? student.initials
             : displayName
-                .split(' ')
-                .where((p) => p.isNotEmpty)
-                .take(2)
-                .map((p) => p[0].toUpperCase())
-                .join());
+                  .split(' ')
+                  .where((p) => p.isNotEmpty)
+                  .take(2)
+                  .map((p) => p[0].toUpperCase())
+                  .join());
 
     void go(String route) {
       Navigator.of(context).pop();
@@ -72,8 +67,9 @@ class CampusDrawer extends ConsumerWidget {
                 children: [
                   CircleAvatar(
                     radius: 24,
-                    backgroundColor:
-                        isDark ? AppColors.darkElevated : AppColors.elevated,
+                    backgroundColor: isDark
+                        ? AppColors.darkElevated
+                        : AppColors.elevated,
                     child: Text(
                       initials,
                       style: GoogleFonts.inter(

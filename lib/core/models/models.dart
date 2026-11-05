@@ -50,6 +50,7 @@ class DemoRoleProfile {
     required this.phone,
     required this.role,
     required this.initials,
+    required this.otp,
   });
 
   final String name;
@@ -57,6 +58,11 @@ class DemoRoleProfile {
   final String phone;
   final UserRole role;
   final String initials;
+
+  /// Local 6-digit code for this enrolled number. There is no SMS gateway.
+  final String otp;
+
+  bool acceptsOtp(String code) => otp == code.trim();
 }
 
 class StudentProfile {
@@ -349,10 +355,7 @@ class FacultyMember {
 }
 
 class CourseYear {
-  const CourseYear({
-    required this.year,
-    required this.papers,
-  });
+  const CourseYear({required this.year, required this.papers});
 
   final String year;
   final List<String> papers;

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
+
 import '../../core/constants/app_colors.dart';
 import '../../core/data/mock_data.dart';
 import '../../core/models/models.dart';
@@ -18,6 +19,19 @@ class ProfileScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final student = MockData.student;
     final auth = ref.watch(authControllerProvider);
+    final enrolled = MockData.profileForDisplayName(auth.demoName);
+    final signedInName = auth.demoName.isNotEmpty
+        ? auth.demoName
+        : student.name;
+    final isPriyaRecord =
+        enrolled != null &&
+        MockData.nationalMobile(enrolled.phone) ==
+            MockData.nationalMobile(student.phone);
+    final initials = enrolled?.initials ?? student.initials;
+    final detailLine = enrolled == null || isPriyaRecord
+        ? student.programmeLine
+        : enrolled.detail;
+    final phoneLine = enrolled?.phone ?? student.phone;
     final mode = ref.watch(themeControllerProvider);
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final navy = isDark ? AppColors.darkTextPrimary : AppColors.navy;
@@ -42,7 +56,7 @@ class ProfileScreen extends ConsumerWidget {
                           radius: 38,
                           backgroundColor: elevated,
                           child: Text(
-                            student.initials,
+                            initials,
                             style: GoogleFonts.inter(
                               fontSize: 22,
                               fontWeight: FontWeight.w700,
@@ -56,7 +70,7 @@ class ProfileScreen extends ConsumerWidget {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               FullNameText(
-                                student.name,
+                                signedInName,
                                 style: GoogleFonts.inter(
                                   fontSize: 19,
                                   fontWeight: FontWeight.w700,
@@ -75,7 +89,7 @@ class ProfileScreen extends ConsumerWidget {
                               ),
                               const SizedBox(height: 3),
                               Text(
-                                student.programmeLine,
+                                detailLine,
                                 style: GoogleFonts.inter(
                                   fontSize: 13,
                                   color: muted,
@@ -83,7 +97,7 @@ class ProfileScreen extends ConsumerWidget {
                               ),
                               const SizedBox(height: 3),
                               Text(
-                                student.phone,
+                                phoneLine,
                                 style: GoogleFonts.inter(
                                   fontSize: 13,
                                   color: muted,

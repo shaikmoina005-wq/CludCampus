@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
 import '../../core/data/mock_data.dart';
 import '../../core/models/models.dart';
 
@@ -18,7 +19,7 @@ class AuthState {
   final String collegeCode;
   final String collegeName;
 
-  /// Signed-in student name. Campus screens still read this field.
+  /// Signed-in person. Campus screens still read this field.
   final String demoName;
   final bool initialized;
 
@@ -48,6 +49,9 @@ class AuthController extends Notifier<AuthState> {
   static const _kCollegeName = 'cc_college_name';
   static const _kDemoName = 'cc_demo_name';
 
+  /// Bumped on login and logout so a slow hydrate cannot overwrite them.
+  int _session = 0;
+
   @override
   AuthState build() {
     _hydrate();
@@ -55,48 +59,57 @@ class AuthController extends Notifier<AuthState> {
   }
 
   Future<void> _hydrate() async {
+    final session = ++_session;
     final prefs = await SharedPreferences.getInstance();
+    if (session != _session) return;
     final loggedIn = prefs.getBool(_kLoggedIn) ?? false;
     if (!loggedIn) {
       state = const AuthState(initialized: true);
       return;
     }
-    final student = MockData.student;
-    await prefs.setString(_kRole, UserRole.student.name);
-    await prefs.setString(_kCollege, student.collegeCode);
-    await prefs.setString(_kCollegeName, student.college);
-    await prefs.setString(_kDemoName, student.name);
+    final roleName = prefs.getString(_kRole) ?? UserRole.student.name;
+    final role = UserRole.values.firstWhere(
+      (r) => r.name == roleName,
+      orElse: () => UserRole.student,
+    );
+    final college = prefs.getString(_kCollege) ?? MockData.asnCollege.code;
+    final collegeName =
+        prefs.getString(_kCollegeName) ?? MockData.asnCollege.name;
+    final demoName = prefs.getString(_kDemoName) ?? '';
     state = AuthState(
       isLoggedIn: true,
-      role: UserRole.student,
-      collegeCode: student.collegeCode,
-      collegeName: student.college,
-      demoName: student.name,
+      role: role,
+      collegeCode: college,
+      collegeName: collegeName,
+      demoName: demoName,
       initialized: true,
     );
   }
 
-  /// Opens the enrolled student's session. The college is taken from that
-  /// record — the student does not pick a campus or a role.
-  Future<void> loginStudent() async {
+  /// Opens the session for an enrolled student or staff profile.
+  /// The mobile number has already selected this person and role.
+  Future<void> loginAsEnrolled(DemoRoleProfile profile) async {
+    _session++;
     final prefs = await SharedPreferences.getInstance();
-    final student = MockData.student;
+    final college = MockData.asnCollege;
+    final display = MockData.displayNameFor(profile);
     await prefs.setBool(_kLoggedIn, true);
-    await prefs.setString(_kRole, UserRole.student.name);
-    await prefs.setString(_kCollege, student.collegeCode);
-    await prefs.setString(_kCollegeName, student.college);
-    await prefs.setString(_kDemoName, student.name);
+    await prefs.setString(_kRole, profile.role.name);
+    await prefs.setString(_kCollege, college.code);
+    await prefs.setString(_kCollegeName, college.name);
+    await prefs.setString(_kDemoName, display);
     state = AuthState(
       isLoggedIn: true,
-      role: UserRole.student,
-      collegeCode: student.collegeCode,
-      collegeName: student.college,
-      demoName: student.name,
+      role: profile.role,
+      collegeCode: college.code,
+      collegeName: college.name,
+      demoName: display,
       initialized: true,
     );
   }
 
   Future<void> logout() async {
+    _session++;
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(_kLoggedIn, false);
     await prefs.remove(_kRole);
@@ -107,5 +120,6 @@ class AuthController extends Notifier<AuthState> {
   }
 }
 
-final authControllerProvider =
-    NotifierProvider<AuthController, AuthState>(AuthController.new);
+final authControllerProvider = NotifierProvider<AuthController, AuthState>(
+  AuthController.new,
+);

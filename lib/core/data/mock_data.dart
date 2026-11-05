@@ -45,6 +45,9 @@ class MockData {
     ),
   ];
 
+  /// Enrolled campus identities. Each profile has its own local OTP.
+  /// Those codes stay off the login screen; sign-in matches the mobile
+  /// to the person, then checks that person's code.
   static const demoRoles = <DemoRoleProfile>[
     DemoRoleProfile(
       name: 'Eshu Sahana',
@@ -52,6 +55,7 @@ class MockData {
       phone: '+91 98765 01002',
       role: UserRole.student,
       initials: 'ES',
+      otp: '010002',
     ),
     DemoRoleProfile(
       name: 'Priya Reddy',
@@ -59,6 +63,7 @@ class MockData {
       phone: '+91 98765 01001',
       role: UserRole.student,
       initials: 'PR',
+      otp: '010001',
     ),
     DemoRoleProfile(
       name: 'Kiran Teja',
@@ -66,6 +71,7 @@ class MockData {
       phone: '+91 98765 01011',
       role: UserRole.student,
       initials: 'KT',
+      otp: '010011',
     ),
     DemoRoleProfile(
       name: 'Dr Ramesh Kumar',
@@ -73,6 +79,7 @@ class MockData {
       phone: '+91 98765 02001',
       role: UserRole.faculty,
       initials: 'RK',
+      otp: '020001',
     ),
     DemoRoleProfile(
       name: 'Prof Lakshmi Narayana',
@@ -80,6 +87,7 @@ class MockData {
       phone: '+91 98765 03001',
       role: UserRole.hod,
       initials: 'LN',
+      otp: '030001',
     ),
     DemoRoleProfile(
       name: 'Dr Ramchand Kolasani',
@@ -87,6 +95,7 @@ class MockData {
       phone: '+91 98765 04001',
       role: UserRole.principal,
       initials: 'RK',
+      otp: '040001',
     ),
     DemoRoleProfile(
       name: 'College Office',
@@ -94,6 +103,7 @@ class MockData {
       phone: '+91 98765 05001',
       role: UserRole.collegeOffice,
       initials: 'CO',
+      otp: '050001',
     ),
   ];
 
@@ -570,8 +580,7 @@ class MockData {
     DebateTopic(
       id: 't2',
       title: 'Campus placements vs higher studies',
-      description:
-          'Is jumping into a job right after graduation better than a master’s?',
+      description: 'Is jumping into a job right after graduation better than a master’s?',
       votes: 7,
       capacity: 10,
     ),
@@ -842,12 +851,7 @@ class MockData {
     ),
     CourseYear(
       year: 'II Year',
-      papers: [
-        'Data Structures',
-        'OOP with Java',
-        'DBMS',
-        'Operating Systems',
-      ],
+      papers: ['Data Structures', 'OOP with Java', 'DBMS', 'Operating Systems'],
     ),
     CourseYear(
       year: 'III Year',
@@ -907,4 +911,53 @@ class MockData {
   }
 
   static CollegeInfo get asnCollege => colleges.first;
+
+  /// Last 10 digits of a phone value, ignoring spaces and a +91 prefix.
+  static String nationalMobile(String value) {
+    final digits = value.replaceAll(RegExp(r'\D'), '');
+    if (digits.length <= 10) return digits;
+    return digits.substring(digits.length - 10);
+  }
+
+  /// The enrolled person for this mobile, or null when the college has
+  /// no record of the number.
+  static DemoRoleProfile? profileForMobile(String mobile) {
+    final needle = nationalMobile(mobile);
+    if (!RegExp(r'^[6-9]\d{9}$').hasMatch(needle)) return null;
+    for (final profile in demoRoles) {
+      if (nationalMobile(profile.phone) == needle) return profile;
+    }
+    return null;
+  }
+
+  /// Name shown after sign-in. Priya's enrolled record uses her full name.
+  static String displayNameFor(DemoRoleProfile profile) {
+    if (profile.role == UserRole.student &&
+        nationalMobile(profile.phone) == nationalMobile(student.phone)) {
+      return student.name;
+    }
+    return profile.name;
+  }
+
+  static DemoRoleProfile? profileForDisplayName(String name) {
+    if (name.isEmpty) return null;
+    for (final profile in demoRoles) {
+      if (profile.name == name || displayNameFor(profile) == name) {
+        return profile;
+      }
+    }
+    return null;
+  }
+
+  /// Periods taught by this person on the demo day.
+  static List<ClassSlot> classesForPerson(String name, [DateTime? now]) {
+    final needle = name.trim().toLowerCase();
+    if (needle.isEmpty) return const [];
+    return todayClasses(now).where((slot) {
+      final faculty = slot.faculty.trim().toLowerCase();
+      return faculty == needle ||
+          needle.contains(faculty) ||
+          faculty.contains(needle);
+    }).toList();
+  }
 }

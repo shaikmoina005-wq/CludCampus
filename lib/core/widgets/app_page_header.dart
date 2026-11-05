@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
+
 import '../constants/app_colors.dart';
 import '../data/mock_data.dart';
-import '../models/models.dart';
 import '../../features/auth/auth_controller.dart';
 import 'full_name_text.dart';
 
@@ -27,27 +27,21 @@ class AppPageHeader extends ConsumerWidget {
     final faint = AppColors.faintTextOf(context);
     final student = MockData.student;
     final auth = ref.watch(authControllerProvider);
-    final displayName =
-        auth.demoName.isNotEmpty ? auth.demoName : student.name;
+    final displayName = auth.demoName.isNotEmpty ? auth.demoName : student.name;
     final collegeName = auth.collegeName.isNotEmpty
         ? auth.collegeName
         : student.college;
-    DemoRoleProfile? demoProfile;
-    for (final r in MockData.demoRoles) {
-      if (r.name == auth.demoName) {
-        demoProfile = r;
-        break;
-      }
-    }
-    final initials = demoProfile?.initials ??
+    final demoProfile = MockData.profileForDisplayName(auth.demoName);
+    final initials =
+        demoProfile?.initials ??
         (displayName == student.name
             ? student.initials
             : displayName
-                .split(' ')
-                .where((p) => p.isNotEmpty)
-                .take(2)
-                .map((p) => p[0].toUpperCase())
-                .join());
+                  .split(' ')
+                  .where((p) => p.isNotEmpty)
+                  .take(2)
+                  .map((p) => p[0].toUpperCase())
+                  .join());
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
