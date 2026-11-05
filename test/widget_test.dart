@@ -1,10 +1,13 @@
 import 'package:cludcampus/app/app.dart';
+import 'package:cludcampus/features/auth/auth_messages.dart';
 import 'package:cludcampus/features/auth/login_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+import 'support/roster_phone_auth_fake.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -15,7 +18,10 @@ void main() {
 
   Future<void> pumpLogin(WidgetTester tester, GoRouter router) async {
     await tester.pumpWidget(
-      ProviderScope(child: MaterialApp.router(routerConfig: router)),
+      ProviderScope(
+        overrides: [rosterPhoneAuthOverride()],
+        child: MaterialApp.router(routerConfig: router),
+      ),
     );
     await tester.pump();
   }
@@ -76,6 +82,7 @@ void main() {
     await tester.enterText(find.byType(TextField).at(0), '9876501001');
     await tester.tap(find.text('Send OTP'));
     await tester.pump();
+    await tester.pump();
 
     expect(find.textContaining('123456'), findsNothing);
     expect(find.textContaining('Demo'), findsNothing);
@@ -84,6 +91,7 @@ void main() {
 
     await tester.enterText(find.byType(TextField).at(1), '010001');
     await tester.tap(find.text('Verify & continue'));
+    await tester.pump();
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 400));
     await tester.pumpAndSettle();
@@ -98,6 +106,7 @@ void main() {
 
     await tester.tap(find.text('Send OTP'));
     await tester.pump();
+    await tester.pump();
 
     expect(
       find.text('Enter the 10-digit mobile number your college registered.'),
@@ -110,7 +119,12 @@ void main() {
   testWidgets('splash opens the student login, then OTP reaches home', (
     tester,
   ) async {
-    await tester.pumpWidget(const ProviderScope(child: CludCampusApp()));
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [rosterPhoneAuthOverride()],
+        child: const CludCampusApp(),
+      ),
+    );
     await tester.pump();
     await tester.pump(const Duration(seconds: 3));
     await tester.pump(const Duration(milliseconds: 400));
@@ -127,11 +141,13 @@ void main() {
     await tester.enterText(find.byType(TextField).at(0), '9876501001');
     await tester.tap(find.text('Send OTP'));
     await tester.pump();
+    await tester.pump();
     expect(find.text('OTP sent to +91 98765 01001'), findsOneWidget);
     expect(find.textContaining('123456'), findsNothing);
 
     await tester.enterText(find.byType(TextField).at(1), '010001');
     await tester.tap(find.text('Verify & continue'));
+    await tester.pump();
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 500));
     await tester.pump(const Duration(milliseconds: 500));
@@ -153,5 +169,32 @@ void main() {
     expect(find.text('Change college'), findsNothing);
     expect(find.textContaining('Select your college'), findsNothing);
     expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('placeholder Firebase config does not accept a roster OTP', (
+    tester,
+  ) async {
+    final router = loginRouter();
+    await tester.pumpWidget(
+      ProviderScope(child: MaterialApp.router(routerConfig: router)),
+    );
+    await tester.pump();
+
+    await tester.enterText(find.byType(TextField).at(0), '9876501001');
+    await tester.tap(find.text('Send OTP'));
+    await tester.pump();
+    await tester.pump();
+
+    expect(find.text(AuthMessages.firebaseNotConfigured), findsOneWidget);
+    expect(find.text('Verify & continue'), findsNothing);
+    expect(find.textContaining('010001'), findsNothing);
+    expect(find.text('Student home'), findsNothing);
+
+    await tester.enterText(find.byType(TextField).at(1), '010001');
+    await tester.tap(find.text('Send OTP'));
+    await tester.pump();
+    await tester.pump();
+    expect(find.text('Student home'), findsNothing);
+    expect(find.text('Login with OTP'), findsOneWidget);
   });
 }

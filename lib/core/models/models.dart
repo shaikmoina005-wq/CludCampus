@@ -68,7 +68,8 @@ class DemoRoleProfile {
   final UserRole role;
   final String initials;
 
-  /// Local 6-digit code for this enrolled number. There is no SMS gateway.
+  /// Debug and test code for this enrolled number.
+  /// Release builds never accept it. Firebase SMS is the production check.
   final String otp;
 
   bool acceptsOtp(String code) => otp == code.trim();

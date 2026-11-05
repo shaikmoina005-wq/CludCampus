@@ -5,14 +5,16 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../core/constants/app_colors.dart';
-import '../../core/data/mock_data.dart';
 import '../../core/widgets/brand_wordmark.dart';
 import '../../core/widgets/wash_background.dart';
 import 'auth_controller.dart';
+import 'auth_messages.dart';
+import 'auth_repository.dart';
+import 'phone_number.dart';
 
-/// Mobile OTP sign-in. The number must already be enrolled. There is no
-/// SMS gateway, so the code is checked on the device against that person.
-/// The screen does not list codes, roles, or other enrolled numbers.
+/// Mobile OTP sign-in. The number must already be enrolled. Enrolled numbers
+/// receive a Firebase SMS code. The screen does not list codes, roles, or
+/// other enrolled numbers.
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
 
@@ -27,6 +29,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   bool _loading = false;
   String? _formError;
   String _otpMobile = '';
+  OtpSession? _session;
 
   @override
   void initState() {
@@ -49,77 +52,75 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     setState(() {
       _otpSent = false;
       _otpMobile = '';
+      _session = null;
       _otpCtrl.clear();
       _formError = null;
     });
   }
 
-  bool get _mobileOk => RegExp(r'^[6-9]\d{9}$').hasMatch(_mobileDigits);
-
-  String _prettyMobile(String digits) {
-    if (digits.length != 10) return digits;
-    return '${digits.substring(0, 5)} ${digits.substring(5)}';
-  }
-
-  void _sendOtp() {
-    if (!_mobileOk) {
-      setState(() {
-        _formError =
-            'Enter the 10-digit mobile number your college registered.';
-      });
-      return;
-    }
-    if (MockData.profileForMobile(_mobileDigits) == null) {
-      setState(() {
-        _otpSent = false;
-        _otpMobile = '';
-        _formError = 'This mobile number is not enrolled.';
-      });
-      return;
-    }
+  Future<void> _sendOtp() async {
+    final resendToken = (_otpSent && _mobileDigits == _otpMobile)
+        ? _session?.resendToken
+        : null;
     setState(() {
-      _otpSent = true;
-      _otpMobile = _mobileDigits;
+      _loading = true;
       _formError = null;
-      _loading = false;
     });
-    final messenger = ScaffoldMessenger.of(context);
-    messenger.hideCurrentSnackBar();
-    messenger.showSnackBar(
-      SnackBar(
-        content: Text('OTP sent to +91 ${_prettyMobile(_mobileDigits)}'),
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
+    final result = await ref
+        .read(authControllerProvider.notifier)
+        .requestOtp(_mobileDigits, forceResendingToken: resendToken);
+    if (!mounted) return;
+    switch (result) {
+      case OtpCodeSent(:final session):
+        setState(() {
+          _loading = false;
+          _otpSent = true;
+          _otpMobile = _mobileDigits;
+          _session = session;
+          _formError = null;
+        });
+        final messenger = ScaffoldMessenger.of(context);
+        messenger.hideCurrentSnackBar();
+        messenger.showSnackBar(
+          SnackBar(
+            content: Text('OTP sent to ${prettyIndianMobile(_mobileDigits)}'),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      case OtpAutoSignedIn():
+        setState(() => _loading = false);
+        ScaffoldMessenger.of(context).hideCurrentSnackBar();
+        context.go('/home');
+      case OtpRequestRejected(:final reason, :final message):
+        setState(() {
+          _loading = false;
+          _formError = message;
+          final dropSession =
+              reason == OtpRejection.notEnrolled ||
+              reason == OtpRejection.invalidNumber ||
+              reason == OtpRejection.notConfigured ||
+              _session == null;
+          if (dropSession) {
+            _otpSent = false;
+            _otpMobile = '';
+            _session = null;
+          }
+        });
+    }
   }
 
   Future<void> _verifyOtp() async {
-    if (!_otpSent || _mobileDigits != _otpMobile) {
+    final session = _session;
+    if (!_otpSent || session == null || _mobileDigits != _otpMobile) {
       setState(() {
-        _formError = 'Send an OTP to this mobile number first.';
+        _formError = AuthMessages.sendFirst;
       });
       return;
     }
     final otp = _otpCtrl.text.trim();
     if (!RegExp(r'^\d{6}$').hasMatch(otp)) {
       setState(() {
-        _formError = 'Enter the 6-digit OTP sent to your mobile.';
-      });
-      return;
-    }
-    final profile = MockData.profileForMobile(_mobileDigits);
-    if (profile == null) {
-      setState(() {
-        _loading = false;
-        _otpSent = false;
-        _formError = 'This mobile number is not enrolled.';
-      });
-      return;
-    }
-    if (!profile.acceptsOtp(otp)) {
-      setState(() {
-        _loading = false;
-        _formError = 'That OTP does not match this number.';
+        _formError = AuthMessages.enterOtp;
       });
       return;
     }
@@ -127,11 +128,21 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       _loading = true;
       _formError = null;
     });
-    await Future<void>.delayed(const Duration(milliseconds: 350));
-    await ref.read(authControllerProvider.notifier).loginAsEnrolled(profile);
+    final result = await ref
+        .read(authControllerProvider.notifier)
+        .verifyOtp(session: session, code: otp);
     if (!mounted) return;
-    ScaffoldMessenger.of(context).hideCurrentSnackBar();
-    context.go('/home');
+    switch (result) {
+      case OtpVerified():
+        setState(() => _loading = false);
+        ScaffoldMessenger.of(context).hideCurrentSnackBar();
+        context.go('/home');
+      case OtpVerifyRejected(:final message):
+        setState(() {
+          _loading = false;
+          _formError = message;
+        });
+    }
   }
 
   @override
