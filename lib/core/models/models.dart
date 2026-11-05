@@ -17,6 +17,48 @@ extension UserRoleX on UserRole {
   }
 }
 
+class CollegeInfo {
+  const CollegeInfo({
+    required this.name,
+    required this.code,
+    required this.city,
+    required this.abbrev,
+    this.isLive = false,
+    this.address,
+    this.phone,
+    this.email,
+    this.affiliation,
+  });
+
+  final String name;
+  final String code;
+  final String city;
+  final String abbrev;
+  final bool isLive;
+  final String? address;
+  final String? phone;
+  final String? email;
+  final String? affiliation;
+
+  String get statusLabel => isLive ? 'LIVE' : 'Onboarding';
+}
+
+class DemoRoleProfile {
+  const DemoRoleProfile({
+    required this.name,
+    required this.detail,
+    required this.phone,
+    required this.role,
+    required this.initials,
+  });
+
+  final String name;
+  final String detail;
+  final String phone;
+  final UserRole role;
+  final String initials;
+}
+
 class StudentProfile {
   const StudentProfile({
     required this.name,
@@ -39,6 +81,16 @@ class StudentProfile {
   final String section;
   final String email;
   final String phone;
+
+  String get initials {
+    final parts = name.trim().split(RegExp(r'\s+'));
+    if (parts.length >= 2) {
+      return '${parts.first[0]}${parts.last[0]}'.toUpperCase();
+    }
+    return name.isNotEmpty ? name[0].toUpperCase() : '?';
+  }
+
+  String get programmeLine => '$branch · $year $section';
 }
 
 class SubjectAttendance {
@@ -58,7 +110,6 @@ class SubjectAttendance {
 
   int get classesNeededFor75 {
     if (percent >= 75) return 0;
-    // Solve (present + x) / (total + x) >= 0.75
     var x = 0;
     while ((present + x) / (total + x) < 0.75) {
       x++;
@@ -92,15 +143,17 @@ class ClassSlot {
     required this.code,
     required this.faculty,
     required this.room,
+    this.yearSection = 'II Year A',
   });
 
-  final String day; // Mon..Sun
+  final String day;
   final String startTime;
   final String endTime;
   final String subject;
   final String code;
   final String faculty;
   final String room;
+  final String yearSection;
 }
 
 class Notice {
@@ -111,6 +164,7 @@ class Notice {
     required this.category,
     required this.postedAt,
     this.pinned = false,
+    this.issuer = 'College Office',
   });
 
   final String id;
@@ -119,6 +173,7 @@ class Notice {
   final String category;
   final DateTime postedAt;
   final bool pinned;
+  final String issuer;
 }
 
 class FeeItem {
@@ -127,7 +182,7 @@ class FeeItem {
     required this.title,
     required this.amount,
     required this.dueDate,
-    required this.status, // paid | pending | overdue
+    required this.status,
   });
 
   final String id;
@@ -157,6 +212,26 @@ class SkillSession {
   final List<String> tags;
 }
 
+class DebateTopic {
+  const DebateTopic({
+    required this.id,
+    required this.title,
+    required this.description,
+    required this.votes,
+    required this.capacity,
+    this.closed = false,
+  });
+
+  final String id;
+  final String title;
+  final String description;
+  final int votes;
+  final int capacity;
+  final bool closed;
+
+  bool get isFull => votes >= capacity;
+}
+
 class LeaveRequest {
   const LeaveRequest({
     required this.id,
@@ -173,7 +248,7 @@ class LeaveRequest {
   final DateTime to;
   final String reason;
   final String type;
-  final String status; // Pending | Approved | Rejected
+  final String status;
   final DateTime appliedOn;
 }
 
@@ -181,14 +256,118 @@ class AwardItem {
   const AwardItem({
     required this.id,
     required this.title,
+    required this.person,
     required this.description,
-    required this.awardedOn,
+    required this.status,
     required this.category,
   });
 
   final String id;
   final String title;
+  final String person;
   final String description;
-  final DateTime awardedOn;
+  final String status; // AWARDED / NOMINATED
   final String category;
+}
+
+class ReminderNote {
+  const ReminderNote({
+    required this.id,
+    required this.text,
+    required this.date,
+  });
+
+  final String id;
+  final String text;
+  final DateTime date;
+}
+
+class GalleryItem {
+  const GalleryItem({
+    required this.id,
+    required this.title,
+    required this.date,
+    required this.attribution,
+    required this.color,
+  });
+
+  final String id;
+  final String title;
+  final DateTime date;
+  final String attribution;
+  final int color;
+}
+
+class TechNewsItem {
+  const TechNewsItem({
+    required this.id,
+    required this.title,
+    required this.summary,
+    required this.category,
+    required this.source,
+    required this.date,
+  });
+
+  final String id;
+  final String title;
+  final String summary;
+  final String category;
+  final String source;
+  final DateTime date;
+}
+
+class ExamPaper {
+  const ExamPaper({
+    required this.id,
+    required this.subject,
+    required this.code,
+    required this.dateLabel,
+    required this.timeLabel,
+  });
+
+  final String id;
+  final String subject;
+  final String code;
+  final String dateLabel;
+  final String timeLabel;
+}
+
+class FacultyMember {
+  const FacultyMember({
+    required this.id,
+    required this.name,
+    required this.designation,
+    required this.subjects,
+    required this.initials,
+  });
+
+  final String id;
+  final String name;
+  final String designation;
+  final String subjects;
+  final String initials;
+}
+
+class CourseYear {
+  const CourseYear({
+    required this.year,
+    required this.papers,
+  });
+
+  final String year;
+  final List<String> papers;
+}
+
+class CalendarDayInfo {
+  const CalendarDayInfo({
+    required this.date,
+    required this.label,
+    this.isHoliday = false,
+    this.hasReminder = false,
+  });
+
+  final DateTime date;
+  final String label;
+  final bool isHoliday;
+  final bool hasReminder;
 }

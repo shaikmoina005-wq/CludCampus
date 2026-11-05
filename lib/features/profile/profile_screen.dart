@@ -1,9 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/data/mock_data.dart';
 import '../../core/models/models.dart';
+import '../../core/settings/notification_settings_controller.dart';
+import '../../core/theme/theme_controller.dart';
+import '../../core/widgets/app_page_header.dart';
+import '../../core/widgets/soft_card.dart';
 import '../auth/auth_controller.dart';
 
 class ProfileScreen extends ConsumerWidget {
@@ -11,112 +16,303 @@ class ProfileScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final s = MockData.student;
+    final student = MockData.student;
     final auth = ref.watch(authControllerProvider);
+    final mode = ref.watch(themeControllerProvider);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final navy = isDark ? AppColors.darkTextPrimary : AppColors.navy;
+    final muted = isDark ? AppColors.darkTextMuted : AppColors.textMuted;
+    final elevated = isDark ? AppColors.darkElevated : AppColors.elevated;
 
-    Widget row(String label, String value) => Padding(
-          padding: const EdgeInsets.symmetric(vertical: 10),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              SizedBox(
-                width: 110,
-                child: Text(
-                  label,
-                  style: const TextStyle(
-                    color: AppColors.textSecondary,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ),
-              Expanded(
-                child: Text(
-                  value,
-                  style: const TextStyle(fontWeight: FontWeight.w600),
-                ),
-              ),
-            ],
-          ),
+    Future<void> switchRole(profile) async {
+      await ref.read(authControllerProvider.notifier).loginAsDemo(profile);
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Demo switched to ${profile.name}')),
         );
+      }
+    }
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Profile')),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          Card(
-            color: AppColors.navy,
-            child: Padding(
-              padding: const EdgeInsets.all(20),
-              child: Column(
+      body: SafeArea(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const AppPageHeader(title: 'CludCampus'),
+            const PageTitleBlock(title: 'Profile', showBack: true),
+            Expanded(
+              child: ListView(
+                padding: const EdgeInsets.fromLTRB(20, 4, 20, 30),
                 children: [
-                  CircleAvatar(
-                    radius: 40,
-                    backgroundColor: Colors.white24,
-                    child: Text(
-                      s.name.substring(0, 1),
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 32,
-                        fontWeight: FontWeight.w800,
-                      ),
+                  SoftCard(
+                    child: Row(
+                      children: [
+                        CircleAvatar(
+                          radius: 38,
+                          backgroundColor: elevated,
+                          child: Text(
+                            student.initials,
+                            style: GoogleFonts.inter(
+                              fontSize: 22,
+                              fontWeight: FontWeight.w700,
+                              color: navy,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                student.name,
+                                style: GoogleFonts.inter(
+                                  fontSize: 19,
+                                  fontWeight: FontWeight.w700,
+                                  color: navy,
+                                ),
+                              ),
+                              const SizedBox(height: 3),
+                              // Keep role as plain text (no Chip whitespace bug).
+                              Text(
+                                auth.role.label,
+                                style: GoogleFonts.inter(
+                                  fontSize: 13,
+                                  color: muted,
+                                ),
+                              ),
+                              const SizedBox(height: 3),
+                              Text(
+                                student.programmeLine,
+                                style: GoogleFonts.inter(
+                                  fontSize: 13,
+                                  color: muted,
+                                ),
+                              ),
+                              const SizedBox(height: 3),
+                              Text(
+                                student.phone,
+                                style: GoogleFonts.inter(
+                                  fontSize: 13,
+                                  color: muted,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
                     ),
+                  ),
+                  const SizedBox(height: 14),
+                  SoftCard(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Appearance',
+                          style: GoogleFonts.inter(
+                            fontWeight: FontWeight.w700,
+                            fontSize: 16,
+                            color: navy,
+                          ),
+                        ),
+                        const SizedBox(height: 5),
+                        Text(
+                          'Follows your phone unless you lock Light or Dark.',
+                          style: GoogleFonts.inter(fontSize: 13, color: muted),
+                        ),
+                        const SizedBox(height: 14),
+                        Row(
+                          children: [
+                            _ThemeSegment(
+                              label: 'System',
+                              selected: mode == ThemeMode.system,
+                              onTap: () => ref
+                                  .read(themeControllerProvider.notifier)
+                                  .setThemeMode(ThemeMode.system),
+                            ),
+                            const SizedBox(width: 8),
+                            _ThemeSegment(
+                              label: 'Light',
+                              selected: mode == ThemeMode.light,
+                              onTap: () => ref
+                                  .read(themeControllerProvider.notifier)
+                                  .setThemeMode(ThemeMode.light),
+                            ),
+                            const SizedBox(width: 8),
+                            _ThemeSegment(
+                              label: 'Dark',
+                              selected: mode == ThemeMode.dark,
+                              onTap: () => ref
+                                  .read(themeControllerProvider.notifier)
+                                  .setThemeMode(ThemeMode.dark),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+                  SoftCard(
+                    padding: EdgeInsets.zero,
+                    onTap: () => context.push('/notification-settings'),
+                    child: ListTile(
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 8,
+                      ),
+                      title: Text(
+                        'Notification settings',
+                        style: GoogleFonts.inter(
+                          fontWeight: FontWeight.w700,
+                          color: navy,
+                        ),
+                      ),
+                      subtitle: Text(
+                        'Push alerts, types, quiet hours',
+                        style: GoogleFonts.inter(color: muted),
+                      ),
+                      trailing: Icon(Icons.chevron_right, color: muted),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  Text(
+                    'Switch demo role',
+                    style: GoogleFonts.inter(
+                      fontWeight: FontWeight.w700,
+                      fontSize: 19,
+                      color: navy,
+                    ),
+                  ),
+                  const SizedBox(height: 5),
+                  Text(
+                    'Use this when walking a principal or office through the product.',
+                    style: GoogleFonts.inter(color: muted, height: 1.4),
                   ),
                   const SizedBox(height: 12),
-                  Text(
-                    s.name,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 20,
-                      fontWeight: FontWeight.w800,
+                  for (final profile in MockData.demoRoles)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 9),
+                      child: SoftCard(
+                        padding: EdgeInsets.zero,
+                        onTap: () => switchRole(profile),
+                        child: ListTile(
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 14,
+                            vertical: 7,
+                          ),
+                          leading: CircleAvatar(
+                            backgroundColor: elevated,
+                            child: Text(
+                              profile.initials,
+                              style: GoogleFonts.inter(
+                                fontWeight: FontWeight.w700,
+                                color: navy,
+                              ),
+                            ),
+                          ),
+                          title: Text(
+                            profile.name,
+                            style: GoogleFonts.inter(
+                              fontWeight: FontWeight.w700,
+                              color: navy,
+                            ),
+                          ),
+                          subtitle: Text(
+                            profile.detail,
+                            style: GoogleFonts.inter(
+                              fontSize: 12,
+                              color: muted,
+                            ),
+                          ),
+                          trailing: auth.demoName == profile.name ||
+                                  (auth.demoName.isEmpty &&
+                                      profile.name == student.name)
+                              ? const Icon(
+                                  Icons.check_circle,
+                                  color: AppColors.success,
+                                )
+                              : Icon(Icons.chevron_right, color: muted),
+                        ),
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    s.rollNo,
-                    style: const TextStyle(color: Colors.white70),
-                  ),
                   const SizedBox(height: 8),
-                  Chip(
-                    label: Text(auth.role.label),
-                    backgroundColor: Colors.white.withValues(alpha: 0.15),
-                    labelStyle: const TextStyle(color: Colors.white),
+                  OutlinedButton.icon(
+                    onPressed: () async {
+                      await ref.read(authControllerProvider.notifier).logout();
+                      if (context.mounted) context.go('/cover');
+                    },
+                    icon: const Icon(Icons.logout),
+                    label: const Text('Sign out'),
+                  ),
+                  const SizedBox(height: 10),
+                  TextButton.icon(
+                    onPressed: () async {
+                      await ref
+                          .read(notificationSettingsProvider.notifier)
+                          .reset();
+                      await ref
+                          .read(themeControllerProvider.notifier)
+                          .setThemeMode(ThemeMode.system);
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Demo data reset')),
+                        );
+                      }
+                    },
+                    icon: const Icon(Icons.restart_alt),
+                    label: const Text('Reset demo data'),
                   ),
                 ],
               ),
             ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ThemeSegment extends StatelessWidget {
+  const _ThemeSegment({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final navy = isDark ? AppColors.darkTextPrimary : AppColors.navy;
+    final border = isDark ? AppColors.darkBorder : AppColors.border;
+    final selectedBg = isDark ? Colors.white : AppColors.primaryButton;
+    final selectedFg = isDark ? AppColors.navy : Colors.white;
+
+    return Expanded(
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          padding: const EdgeInsets.symmetric(vertical: 11),
+          decoration: BoxDecoration(
+            color: selected ? selectedBg : Colors.transparent,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: selected ? selectedBg : border),
           ),
-          const SizedBox(height: 16),
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                children: [
-                  row('College', s.college),
-                  const Divider(),
-                  row('Code', s.collegeCode),
-                  const Divider(),
-                  row('Branch', s.branch),
-                  const Divider(),
-                  row('Year', '${s.year} · Sec ${s.section}'),
-                  const Divider(),
-                  row('Email', s.email),
-                  const Divider(),
-                  row('Phone', s.phone),
-                ],
-              ),
+          alignment: Alignment.center,
+          child: Text(
+            label,
+            style: GoogleFonts.inter(
+              fontWeight: FontWeight.w600,
+              color: selected ? selectedFg : navy,
             ),
           ),
-          const SizedBox(height: 16),
-          OutlinedButton.icon(
-            onPressed: () async {
-              await ref.read(authControllerProvider.notifier).logout();
-              if (context.mounted) context.go('/login');
-            },
-            icon: const Icon(Icons.logout),
-            label: const Text('Sign out'),
-          ),
-        ],
+        ),
       ),
     );
   }

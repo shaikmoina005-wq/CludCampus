@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import '../../core/constants/app_colors.dart';
-import '../../core/constants/app_strings.dart';
 import 'auth_controller.dart';
 
+/// Full-bleed brand cover splash — holds at least 3 seconds (matches web demo).
 class SplashScreen extends ConsumerStatefulWidget {
   const SplashScreen({super.key});
 
@@ -13,10 +12,12 @@ class SplashScreen extends ConsumerStatefulWidget {
 }
 
 class _SplashScreenState extends ConsumerState<SplashScreen> {
+  static const _minSplash = Duration(seconds: 3);
+
   @override
   void initState() {
     super.initState();
-    Future<void>.delayed(const Duration(milliseconds: 1400), _navigate);
+    Future<void>.delayed(_minSplash, _navigate);
   }
 
   void _navigate() {
@@ -28,58 +29,33 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
     }
     if (auth.isLoggedIn) {
       context.go('/home');
-    } else {
+    } else if (auth.hasCollege) {
       context.go('/login');
+    } else {
+      context.go('/cover');
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.navy,
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(24),
-              ),
-              child: Image.asset(
-                'assets/branding/cludcampus-logo.png',
-                width: 160,
-                height: 80,
-                fit: BoxFit.contain,
+      backgroundColor: const Color(0xFFF2F4F7),
+      body: Stack(
+        fit: StackFit.expand,
+        children: [
+          Image.asset(
+            'assets/branding/cludcampus-cover.jpg',
+            fit: BoxFit.cover,
+            alignment: Alignment.center,
+            filterQuality: FilterQuality.high,
+            errorBuilder: (_, __, ___) => const ColoredBox(
+              color: Color(0xFFF2F4F7),
+              child: Center(
+                child: CircularProgressIndicator(strokeWidth: 2.5),
               ),
             ),
-            const SizedBox(height: 28),
-            Text(
-              AppStrings.appName,
-              style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w800,
-                  ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Your campus, organised.',
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Colors.white70,
-                  ),
-            ),
-            const SizedBox(height: 40),
-            const SizedBox(
-              width: 28,
-              height: 28,
-              child: CircularProgressIndicator(
-                strokeWidth: 2.5,
-                color: Colors.white,
-              ),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

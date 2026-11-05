@@ -42,7 +42,7 @@ class StatCard extends StatelessWidget {
                   child: Text(
                     label,
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: AppColors.textSecondary,
+                          color: AppColors.mutedTextOf(context),
                           fontWeight: FontWeight.w500,
                         ),
                   ),
@@ -62,7 +62,7 @@ class StatCard extends StatelessWidget {
               Text(
                 subtitle!,
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: AppColors.textSecondary,
+                      color: AppColors.mutedTextOf(context),
                     ),
               ),
             ],

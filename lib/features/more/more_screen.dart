@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../../core/constants/app_colors.dart';
-import '../../core/constants/app_strings.dart';
-import '../../core/data/mock_data.dart';
+import '../../core/widgets/app_page_header.dart';
+import '../../core/widgets/soft_card.dart';
 import '../auth/auth_controller.dart';
 
 class MoreScreen extends ConsumerWidget {
@@ -11,96 +12,167 @@ class MoreScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final student = MockData.student;
+    // Student More menu — order + hints match live demo /app/more.
     final items = <_MoreItem>[
-      _MoreItem(Icons.payments_outlined, 'Fees', 'Dues & payment history', '/fees'),
-      _MoreItem(Icons.campaign_outlined, 'Notices', 'Circulars & announcements', '/notices'),
-      _MoreItem(Icons.psychology_outlined, 'Friday Skill', 'Skill sessions', '/friday-skill'),
-      _MoreItem(Icons.event_busy_outlined, 'Leave', 'Apply & history', '/leave'),
-      _MoreItem(Icons.emoji_events_outlined, 'Awards', 'Recognition & achievements', '/awards'),
-      _MoreItem(Icons.person_outline, 'Profile', 'Student card & details', '/profile'),
+      const _MoreItem(Icons.auto_awesome_outlined, 'Friday Skill',
+          'Friday debate topics and Spotlight Hour', '/friday-skill'),
+      const _MoreItem(Icons.note_alt_outlined, 'Notes & reminders',
+          'Your own list with a date', '/notes'),
+      const _MoreItem(Icons.calendar_month_outlined, 'Calendar',
+          'Classes, holidays and reminders', '/calendar'),
+      const _MoreItem(Icons.photo_library_outlined, 'Gallery',
+          'College celebrations & events', '/gallery'),
+      const _MoreItem(Icons.currency_rupee_rounded, 'Fees',
+          'Pay and view dues', '/fees'),
+      const _MoreItem(Icons.event_busy_outlined, 'Leave requests',
+          'Apply and track', '/leave'),
+      const _MoreItem(Icons.newspaper_outlined, 'Tech News',
+          'World feeds for class discussion', '/tech-news'),
+      const _MoreItem(Icons.edit_calendar_outlined, 'Examinations',
+          'Internals and ANU timetable', '/examinations'),
+      const _MoreItem(Icons.emoji_events_outlined, 'Recognition',
+          'Student of the Month and staff awards', '/awards'),
+      const _MoreItem(Icons.rate_review_outlined, 'Staff feedback',
+          'Ratings after each class', '/staff-feedback'),
+      const _MoreItem(Icons.groups_outlined, 'Faculty',
+          'Teachers for your programme', '/faculty'),
+      const _MoreItem(Icons.account_balance_outlined, 'College',
+          'Campus profile', '/college'),
+      const _MoreItem(Icons.menu_book_outlined, 'Previous papers',
+          'Past exams for every group and year', '/course-papers'),
+      const _MoreItem(Icons.notifications_outlined, 'Notification settings',
+          'Push types and quiet hours', '/notification-settings'),
+      const _MoreItem(Icons.install_mobile_outlined, 'Get the app',
+          'Home Screen, iPhone and Android', '/get-app'),
     ];
 
+    final navy = AppColors.primaryTextOf(context);
+    final muted = AppColors.mutedTextOf(context);
+
     return Scaffold(
-      appBar: AppBar(title: const Text('More')),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          Card(
-            color: AppColors.navy,
-            child: ListTile(
-              contentPadding: const EdgeInsets.all(16),
-              leading: CircleAvatar(
-                radius: 28,
-                backgroundColor: Colors.white24,
-                child: Text(
-                  student.name.substring(0, 1),
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 22,
-                    fontWeight: FontWeight.w700,
+      backgroundColor: AppColors.scaffoldOf(context),
+      body: SafeArea(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const AppPageHeader(title: 'CludCampus'),
+            const PageTitleBlock(
+              title: 'More',
+              subtitle: 'The rest of the campus',
+            ),
+            Expanded(
+              child: ListView(
+                padding: const EdgeInsets.fromLTRB(20, 4, 20, 28),
+                children: [
+                  for (final item in items)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 8),
+                      child: SoftCard(
+                        padding: EdgeInsets.zero,
+                        onTap: () => context.push(item.route),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 14,
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(item.icon, color: muted, size: 22),
+                              const SizedBox(width: 14),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment:
+                                      CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      item.title,
+                                      style: GoogleFonts.inter(
+                                        fontWeight: FontWeight.w600,
+                                        fontSize: 15,
+                                        color: navy,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 2),
+                                    Text(
+                                      item.subtitle,
+                                      style: GoogleFonts.inter(
+                                        fontSize: 13,
+                                        color: muted,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: SoftCard(
+                      padding: EdgeInsets.zero,
+                      onTap: () => context.push('/profile'),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 14,
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(Icons.person_outline, color: muted, size: 22),
+                            const SizedBox(width: 14),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Profile & appearance',
+                                    style: GoogleFonts.inter(
+                                      fontWeight: FontWeight.w600,
+                                      fontSize: 15,
+                                      color: navy,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    'Dark mode, demo roles, sign out',
+                                    style: GoogleFonts.inter(
+                                      fontSize: 13,
+                                      color: muted,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
                   ),
-                ),
-              ),
-              title: Text(
-                student.name,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              subtitle: Text(
-                '${student.rollNo} · ${student.collegeCode}',
-                style: const TextStyle(color: Colors.white70),
-              ),
-              trailing: IconButton(
-                onPressed: () => context.push('/profile'),
-                icon: const Icon(Icons.chevron_right, color: Colors.white),
+                  const SizedBox(height: 8),
+                  SizedBox(
+                    width: double.infinity,
+                    child: FilledButton(
+                      style: FilledButton.styleFrom(
+                        backgroundColor: AppColors.elevatedOf(context),
+                        foregroundColor: navy,
+                        elevation: 0,
+                      ),
+                      onPressed: () async {
+                        await ref
+                            .read(authControllerProvider.notifier)
+                            .logout();
+                        if (context.mounted) context.go('/cover');
+                      },
+                      child: const Text('Logout'),
+                    ),
+                  ),
+                ],
               ),
             ),
-          ),
-          const SizedBox(height: 16),
-          ...items.map(
-            (item) => Card(
-              margin: const EdgeInsets.only(bottom: 8),
-              child: ListTile(
-                leading: Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: AppColors.accent.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Icon(item.icon, color: AppColors.accent),
-                ),
-                title: Text(
-                  item.title,
-                  style: const TextStyle(fontWeight: FontWeight.w700),
-                ),
-                subtitle: Text(item.subtitle),
-                trailing: const Icon(Icons.chevron_right),
-                onTap: () => context.push(item.route),
-              ),
-            ),
-          ),
-          const SizedBox(height: 8),
-          OutlinedButton.icon(
-            onPressed: () async {
-              await ref.read(authControllerProvider.notifier).logout();
-              if (context.mounted) context.go('/login');
-            },
-            icon: const Icon(Icons.logout),
-            label: const Text('Sign out of demo'),
-          ),
-          const SizedBox(height: 16),
-          Center(
-            child: Text(
-              '${AppStrings.appName} MVP · mock data',
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: AppColors.textSecondary,
-                  ),
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
