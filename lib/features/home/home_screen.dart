@@ -7,6 +7,7 @@ import '../../core/constants/app_colors.dart';
 import '../../core/data/mock_data.dart';
 import '../../core/models/models.dart';
 import '../../core/widgets/app_page_header.dart';
+import '../../core/widgets/full_name_text.dart';
 import '../../core/widgets/soft_card.dart';
 import '../auth/auth_controller.dart';
 
@@ -31,7 +32,6 @@ class HomeScreen extends ConsumerWidget {
     final greeting = MockData.timeGreeting();
     final demoProfile = _demoProfile(auth.demoName);
     final displayName = auth.demoName.isNotEmpty ? auth.demoName : student.name;
-    final firstName = displayName.split(' ').first;
     final collegeName = auth.collegeName.isNotEmpty
         ? auth.collegeName
         : student.college;
@@ -64,11 +64,12 @@ class HomeScreen extends ConsumerWidget {
                     ),
                   ),
                   const SizedBox(height: 8),
-                  Text(
-                    '$greeting, $firstName',
+                  FullNameText(
+                    '$greeting, $displayName',
                     style: GoogleFonts.inter(
                       fontSize: 24,
                       fontWeight: FontWeight.w500,
+                      height: 1.25,
                       letterSpacing: -0.4,
                       color: navy,
                     ),

@@ -6,6 +6,7 @@ import '../constants/app_colors.dart';
 import '../data/mock_data.dart';
 import '../models/models.dart';
 import '../../features/auth/auth_controller.dart';
+import 'full_name_text.dart';
 
 class CampusDrawer extends ConsumerWidget {
   const CampusDrawer({super.key});
@@ -86,11 +87,12 @@ class CampusDrawer extends ConsumerWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
+                        FullNameText(
                           displayName,
                           style: GoogleFonts.inter(
                             fontWeight: FontWeight.w700,
                             fontSize: 16,
+                            height: 1.25,
                             color: navy,
                           ),
                         ),

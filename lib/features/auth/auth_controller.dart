@@ -17,10 +17,10 @@ class AuthState {
   final UserRole role;
   final String collegeCode;
   final String collegeName;
+
+  /// Signed-in student name. Campus screens still read this field.
   final String demoName;
   final bool initialized;
-
-  bool get hasCollege => collegeCode.isNotEmpty;
 
   AuthState copyWith({
     bool? isLoggedIn,
@@ -57,84 +57,52 @@ class AuthController extends Notifier<AuthState> {
   Future<void> _hydrate() async {
     final prefs = await SharedPreferences.getInstance();
     final loggedIn = prefs.getBool(_kLoggedIn) ?? false;
-    final roleName = prefs.getString(_kRole) ?? UserRole.student.name;
-    final college = prefs.getString(_kCollege) ?? '';
-    final collegeName = prefs.getString(_kCollegeName) ?? '';
-    final demoName = prefs.getString(_kDemoName) ?? '';
-    final role = UserRole.values.firstWhere(
-      (r) => r.name == roleName,
-      orElse: () => UserRole.student,
-    );
-    state = AuthState(
-      isLoggedIn: loggedIn,
-      role: role,
-      collegeCode: college,
-      collegeName: collegeName,
-      demoName: demoName,
-      initialized: true,
-    );
-  }
-
-  Future<void> selectCollege(CollegeInfo college) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_kCollege, college.code);
-    await prefs.setString(_kCollegeName, college.name);
-    state = state.copyWith(
-      collegeCode: college.code,
-      collegeName: college.name,
-    );
-  }
-
-  Future<void> clearCollege() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.remove(_kCollege);
-    await prefs.remove(_kCollegeName);
-    state = state.copyWith(collegeCode: '', collegeName: '');
-  }
-
-  Future<void> login({
-    required UserRole role,
-    String? collegeCode,
-    String? collegeName,
-    String? demoName,
-  }) async {
-    final prefs = await SharedPreferences.getInstance();
-    final code = collegeCode ?? state.collegeCode;
-    final name = collegeName ?? state.collegeName;
-    final display = demoName ??
-        (role == UserRole.student ? MockData.student.name : role.label);
-    await prefs.setBool(_kLoggedIn, true);
-    await prefs.setString(_kRole, role.name);
-    await prefs.setString(_kCollege, code);
-    await prefs.setString(_kCollegeName, name);
-    await prefs.setString(_kDemoName, display);
+    if (!loggedIn) {
+      state = const AuthState(initialized: true);
+      return;
+    }
+    final student = MockData.student;
+    await prefs.setString(_kRole, UserRole.student.name);
+    await prefs.setString(_kCollege, student.collegeCode);
+    await prefs.setString(_kCollegeName, student.college);
+    await prefs.setString(_kDemoName, student.name);
     state = AuthState(
       isLoggedIn: true,
-      role: role,
-      collegeCode: code,
-      collegeName: name,
-      demoName: display,
+      role: UserRole.student,
+      collegeCode: student.collegeCode,
+      collegeName: student.college,
+      demoName: student.name,
       initialized: true,
     );
   }
 
-  Future<void> loginAsDemo(DemoRoleProfile profile) async {
-    await login(
-      role: profile.role,
-      demoName: profile.name,
+  /// Opens the enrolled student's session. The college is taken from that
+  /// record — the student does not pick a campus or a role.
+  Future<void> loginStudent() async {
+    final prefs = await SharedPreferences.getInstance();
+    final student = MockData.student;
+    await prefs.setBool(_kLoggedIn, true);
+    await prefs.setString(_kRole, UserRole.student.name);
+    await prefs.setString(_kCollege, student.collegeCode);
+    await prefs.setString(_kCollegeName, student.college);
+    await prefs.setString(_kDemoName, student.name);
+    state = AuthState(
+      isLoggedIn: true,
+      role: UserRole.student,
+      collegeCode: student.collegeCode,
+      collegeName: student.college,
+      demoName: student.name,
+      initialized: true,
     );
   }
 
   Future<void> logout() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(_kLoggedIn, false);
+    await prefs.remove(_kRole);
+    await prefs.remove(_kCollege);
+    await prefs.remove(_kCollegeName);
     await prefs.remove(_kDemoName);
-    state = state.copyWith(isLoggedIn: false, demoName: '');
-  }
-
-  Future<void> resetDemoData() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.clear();
     state = const AuthState(initialized: true);
   }
 }
