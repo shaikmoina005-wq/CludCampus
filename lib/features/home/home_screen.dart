@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
+
 import '../../core/constants/app_colors.dart';
 import '../../core/data/mock_data.dart';
 import '../../core/models/models.dart';
@@ -14,29 +15,26 @@ import '../auth/auth_controller.dart';
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
 
-  DemoRoleProfile? _demoProfile(String demoName) {
-    if (demoName.isEmpty) return null;
-    for (final r in MockData.demoRoles) {
-      if (r.name == demoName) return r;
-    }
-    return null;
-  }
-
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final auth = ref.watch(authControllerProvider);
     final student = MockData.student;
     final attendance = MockData.attendance;
-    final today = MockData.todayClasses();
     final notices = MockData.notices.take(3).toList();
     final greeting = MockData.timeGreeting();
-    final demoProfile = _demoProfile(auth.demoName);
+    final demoProfile = MockData.profileForDisplayName(auth.demoName);
     final displayName = auth.demoName.isNotEmpty ? auth.demoName : student.name;
     final collegeName = auth.collegeName.isNotEmpty
         ? auth.collegeName
         : student.college;
     final dateLine = DateFormat('EEEE, d MMMM').format(DateTime.now());
     final pct = attendance.overallPercent.round();
+    final isStudent = auth.role == UserRole.student;
+    final showToday =
+        isStudent || auth.role == UserRole.faculty || auth.role == UserRole.hod;
+    final today = isStudent
+        ? MockData.todayClasses()
+        : MockData.classesForPerson(demoProfile?.name ?? displayName);
 
     final navy = AppColors.primaryTextOf(context);
     final muted = AppColors.mutedTextOf(context);
@@ -76,7 +74,7 @@ class HomeScreen extends ConsumerWidget {
                   ),
                   const SizedBox(height: 6),
                   Text(
-                    '$dateLine · ${demoProfile?.detail ?? '${student.branch} · ${student.year}'}',
+                    '$dateLine · ${demoProfile?.detail ?? (isStudent ? '${student.branch} · ${student.year}' : auth.role.label)}',
                     style: GoogleFonts.inter(
                       fontSize: 13,
                       color: muted,
@@ -85,295 +83,303 @@ class HomeScreen extends ConsumerWidget {
                   ),
                   const SizedBox(height: 20),
 
-                  // Attendance + Fee due (demo side-by-side)
-                  IntrinsicHeight(
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        Expanded(
-                          child: SoftCard(
-                            onTap: () => context.go('/attendance'),
-                            padding: const EdgeInsets.all(14),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
-                                  children: [
-                                    SizedBox(
-                                      width: 56,
-                                      height: 56,
-                                      child: CustomPaint(
-                                        painter: _RingPainter(
-                                          progress:
-                                              attendance.overallPercent / 100,
-                                          color: AppColors.attendanceGreen,
-                                          trackColor: isDark
-                                              ? AppColors.darkElevated
-                                              : AppColors.elevated,
-                                        ),
-                                        child: Center(
-                                          child: Text(
-                                            '$pct%',
-                                            style: GoogleFonts.inter(
-                                              fontSize: 14,
-                                              fontWeight: FontWeight.w600,
-                                              color: AppColors.attendanceGreen,
+                  if (isStudent) ...[
+                    // Attendance + Fee due (demo side-by-side)
+                    IntrinsicHeight(
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          Expanded(
+                            child: SoftCard(
+                              onTap: () => context.go('/attendance'),
+                              padding: const EdgeInsets.all(14),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    children: [
+                                      SizedBox(
+                                        width: 56,
+                                        height: 56,
+                                        child: CustomPaint(
+                                          painter: _RingPainter(
+                                            progress:
+                                                attendance.overallPercent / 100,
+                                            color: AppColors.attendanceGreen,
+                                            trackColor: isDark
+                                                ? AppColors.darkElevated
+                                                : AppColors.elevated,
+                                          ),
+                                          child: Center(
+                                            child: Text(
+                                              '$pct%',
+                                              style: GoogleFonts.inter(
+                                                fontSize: 14,
+                                                fontWeight: FontWeight.w600,
+                                                color:
+                                                    AppColors.attendanceGreen,
+                                              ),
                                             ),
                                           ),
                                         ),
                                       ),
-                                    ),
-                                    const SizedBox(width: 10),
-                                    Expanded(
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          Text(
-                                            'Overall attendance',
-                                            style: GoogleFonts.inter(
-                                              fontSize: 12,
-                                              color: muted,
-                                              fontWeight: FontWeight.w500,
+                                      const SizedBox(width: 10),
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              'Overall attendance',
+                                              style: GoogleFonts.inter(
+                                                fontSize: 12,
+                                                color: muted,
+                                                fontWeight: FontWeight.w500,
+                                              ),
                                             ),
-                                          ),
-                                          const SizedBox(height: 4),
-                                          Text(
-                                            '${attendance.overallPresent}/${attendance.overallTotal} hours',
-                                            style: GoogleFonts.inter(
-                                              fontSize: 14,
-                                              fontWeight: FontWeight.w600,
-                                              color: navy,
+                                            const SizedBox(height: 4),
+                                            Text(
+                                              '${attendance.overallPresent}/${attendance.overallTotal} hours',
+                                              style: GoogleFonts.inter(
+                                                fontSize: 14,
+                                                fontWeight: FontWeight.w600,
+                                                color: navy,
+                                              ),
                                             ),
-                                          ),
-                                        ],
+                                          ],
+                                        ),
                                       ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 10),
+                                  Text(
+                                    'Above the 75% ANU minimum',
+                                    style: GoogleFonts.inter(
+                                      fontSize: 11,
+                                      color: faint,
                                     ),
-                                  ],
-                                ),
-                                const SizedBox(height: 10),
-                                Text(
-                                  'Above the 75% ANU minimum',
-                                  style: GoogleFonts.inter(
-                                    fontSize: 11,
-                                    color: faint,
                                   ),
-                                ),
-                              ],
+                                ],
+                              ),
                             ),
                           ),
-                        ),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: SoftCard(
-                            onTap: () => context.push('/more/fees'),
-                            padding: const EdgeInsets.all(14),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'Fee due',
-                                  style: GoogleFonts.inter(
-                                    fontSize: 12,
-                                    color: muted,
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                                const SizedBox(height: 6),
-                                Text(
-                                  '₹${MockData.examFeeAmount.toStringAsFixed(0).replaceAllMapped(RegExp(r'(\d)(?=(\d{3})+(?!\d))'), (m) => '${m[1]},')}',
-                                  style: GoogleFonts.inter(
-                                    fontSize: 26,
-                                    fontWeight: FontWeight.w600,
-                                    letterSpacing: -0.5,
-                                    color: navy,
-                                  ),
-                                ),
-                                const Spacer(),
-                                const SizedBox(height: 10),
-                                SizedBox(
-                                  width: double.infinity,
-                                  child: FilledButton(
-                                    onPressed: () =>
-                                        context.push('/more/fees'),
-                                    style: FilledButton.styleFrom(
-                                      minimumSize: const Size.fromHeight(40),
-                                      padding: const EdgeInsets.symmetric(
-                                        vertical: 10,
-                                      ),
-                                      textStyle: GoogleFonts.inter(
-                                        fontWeight: FontWeight.w600,
-                                        fontSize: 13,
-                                      ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: SoftCard(
+                              onTap: () => context.push('/more/fees'),
+                              padding: const EdgeInsets.all(14),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Fee due',
+                                    style: GoogleFonts.inter(
+                                      fontSize: 12,
+                                      color: muted,
+                                      fontWeight: FontWeight.w500,
                                     ),
-                                    child: const Text('Pay now'),
                                   ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-
-                  // Recognition
-                  SoftCard(
-                    onTap: () => context.push('/more/awards'),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'RECOGNITION',
-                          style: GoogleFonts.inter(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w600,
-                            letterSpacing: 0.6,
-                            color: faint,
-                          ),
-                        ),
-                        const SizedBox(height: 6),
-                        Text(
-                          MockData.recognitionTitle,
-                          style: GoogleFonts.inter(
-                            fontSize: 17,
-                            fontWeight: FontWeight.w600,
-                            color: navy,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          MockData.recognitionPeriod,
-                          style: GoogleFonts.inter(
-                            fontSize: 13,
-                            color: muted,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-
-                  // Friday Skill
-                  SoftCard(
-                    accentLeft: true,
-                    onTap: () => context.push('/more/friday-skill'),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Text(
-                              'FRIDAY SKILL',
-                              style: GoogleFonts.inter(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w600,
-                                letterSpacing: 0.6,
-                                color: faint,
+                                  const SizedBox(height: 6),
+                                  Text(
+                                    '₹${MockData.examFeeAmount.toStringAsFixed(0).replaceAllMapped(RegExp(r'(\d)(?=(\d{3})+(?!\d))'), (m) => '${m[1]},')}',
+                                    style: GoogleFonts.inter(
+                                      fontSize: 26,
+                                      fontWeight: FontWeight.w600,
+                                      letterSpacing: -0.5,
+                                      color: navy,
+                                    ),
+                                  ),
+                                  const Spacer(),
+                                  const SizedBox(height: 10),
+                                  SizedBox(
+                                    width: double.infinity,
+                                    child: FilledButton(
+                                      onPressed: () =>
+                                          context.push('/more/fees'),
+                                      style: FilledButton.styleFrom(
+                                        minimumSize: const Size.fromHeight(40),
+                                        padding: const EdgeInsets.symmetric(
+                                          vertical: 10,
+                                        ),
+                                        textStyle: GoogleFonts.inter(
+                                          fontWeight: FontWeight.w600,
+                                          fontSize: 13,
+                                        ),
+                                      ),
+                                      child: const Text('Pay now'),
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
-                            const Spacer(),
-                            Text(
-                              MockData.fridaySkillTime,
-                              style: GoogleFonts.inter(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w500,
-                                color: faint,
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 6),
-                        Text(
-                          MockData.fridaySkillTitle,
-                          style: GoogleFonts.inter(
-                            fontSize: 17,
-                            fontWeight: FontWeight.w600,
-                            color: navy,
                           ),
-                        ),
-                        const SizedBox(height: 6),
-                        Text(
-                          MockData.fridaySkillMeta,
-                          style: GoogleFonts.inter(
-                            fontSize: 12,
-                            color: muted,
-                          ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 16),
+                    const SizedBox(height: 12),
 
-                  // Feedback CTA — muted secondary like demo
-                  SizedBox(
-                    width: double.infinity,
-                    child: FilledButton(
-                      onPressed: () => context.push('/staff-feedback'),
-                      style: FilledButton.styleFrom(
-                        backgroundColor: isDark
-                            ? AppColors.darkElevated
-                            : const Color(0xFF8A9BB0),
-                        foregroundColor: Colors.white,
-                      ),
-                      child: const Text('Give class feedback'),
-                    ),
-                  ),
-                  const SizedBox(height: 28),
-
-                  // Today
-                  Row(
-                    children: [
-                      Text(
-                        'Today',
-                        style: GoogleFonts.inter(
-                          fontSize: 20,
-                          fontWeight: FontWeight.w600,
-                          color: navy,
-                        ),
-                      ),
-                      const Spacer(),
-                      TextButton(
-                        onPressed: () => context.go('/timetable'),
-                        child: Text(
-                          'Week ›',
-                          style: GoogleFonts.inter(
-                            fontWeight: FontWeight.w600,
-                            color: muted,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  SoftCard(
-                    child: today.isEmpty
-                        ? Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 12),
-                            child: Center(
-                              child: Text(
-                                'No class periods today.',
-                                style: GoogleFonts.inter(
-                                  color: muted,
-                                  fontSize: 14,
-                                ),
-                              ),
+                    // Recognition
+                    SoftCard(
+                      onTap: () => context.push('/more/awards'),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'RECOGNITION',
+                            style: GoogleFonts.inter(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                              letterSpacing: 0.6,
+                              color: faint,
                             ),
-                          )
-                        : Column(
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            MockData.recognitionTitle,
+                            style: GoogleFonts.inter(
+                              fontSize: 17,
+                              fontWeight: FontWeight.w600,
+                              color: navy,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            MockData.recognitionPeriod,
+                            style: GoogleFonts.inter(
+                              fontSize: 13,
+                              color: muted,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+
+                    // Friday Skill
+                    SoftCard(
+                      accentLeft: true,
+                      onTap: () => context.push('/more/friday-skill'),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
                             children: [
-                              for (var i = 0; i < today.length; i++) ...[
-                                if (i > 0)
-                                  Divider(
-                                    height: 20,
-                                    color: AppColors.dividerOf(context),
-                                  ),
-                                _TodayRow(slot: today[i]),
-                              ],
+                              Text(
+                                'FRIDAY SKILL',
+                                style: GoogleFonts.inter(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w600,
+                                  letterSpacing: 0.6,
+                                  color: faint,
+                                ),
+                              ),
+                              const Spacer(),
+                              Text(
+                                MockData.fridaySkillTime,
+                                style: GoogleFonts.inter(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w500,
+                                  color: faint,
+                                ),
+                              ),
                             ],
                           ),
-                  ),
+                          const SizedBox(height: 6),
+                          Text(
+                            MockData.fridaySkillTitle,
+                            style: GoogleFonts.inter(
+                              fontSize: 17,
+                              fontWeight: FontWeight.w600,
+                              color: navy,
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            MockData.fridaySkillMeta,
+                            style: GoogleFonts.inter(
+                              fontSize: 12,
+                              color: muted,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Feedback CTA — muted secondary like demo
+                    SizedBox(
+                      width: double.infinity,
+                      child: FilledButton(
+                        onPressed: () => context.push('/staff-feedback'),
+                        style: FilledButton.styleFrom(
+                          backgroundColor: isDark
+                              ? AppColors.darkElevated
+                              : const Color(0xFF8A9BB0),
+                          foregroundColor: Colors.white,
+                        ),
+                        child: const Text('Give class feedback'),
+                      ),
+                    ),
+                  ] else
+                    _StaffHomeCards(role: auth.role, collegeName: collegeName),
                   const SizedBox(height: 28),
+
+                  if (showToday) ...[
+                    // Today
+                    Row(
+                      children: [
+                        Text(
+                          'Today',
+                          style: GoogleFonts.inter(
+                            fontSize: 20,
+                            fontWeight: FontWeight.w600,
+                            color: navy,
+                          ),
+                        ),
+                        const Spacer(),
+                        TextButton(
+                          onPressed: () => context.go('/timetable'),
+                          child: Text(
+                            'Week ›',
+                            style: GoogleFonts.inter(
+                              fontWeight: FontWeight.w600,
+                              color: muted,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    SoftCard(
+                      child: today.isEmpty
+                          ? Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                              child: Center(
+                                child: Text(
+                                  isStudent
+                                      ? 'No class periods today.'
+                                      : 'No classes on your timetable today.',
+                                  style: GoogleFonts.inter(
+                                    color: muted,
+                                    fontSize: 14,
+                                  ),
+                                ),
+                              ),
+                            )
+                          : Column(
+                              children: [
+                                for (var i = 0; i < today.length; i++) ...[
+                                  if (i > 0)
+                                    Divider(
+                                      height: 20,
+                                      color: AppColors.dividerOf(context),
+                                    ),
+                                  _TodayRow(slot: today[i]),
+                                ],
+                              ],
+                            ),
+                    ),
+                    const SizedBox(height: 28),
+                  ],
 
                   // Notices
                   Row(
@@ -429,6 +435,119 @@ class HomeScreen extends ConsumerWidget {
   }
 }
 
+class _StaffHomeCards extends StatelessWidget {
+  const _StaffHomeCards({required this.role, required this.collegeName});
+
+  final UserRole role;
+  final String collegeName;
+
+  @override
+  Widget build(BuildContext context) {
+    final cards = <Widget>[];
+    void add(String kicker, String title, String subtitle, VoidCallback onTap) {
+      if (cards.isNotEmpty) cards.add(const SizedBox(height: 12));
+      cards.add(
+        SoftCard(
+          onTap: onTap,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                kicker,
+                style: GoogleFonts.inter(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: 0.6,
+                  color: AppColors.faintTextOf(context),
+                ),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                title,
+                style: GoogleFonts.inter(
+                  fontSize: 17,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.primaryTextOf(context),
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                subtitle,
+                style: GoogleFonts.inter(
+                  fontSize: 13,
+                  color: AppColors.mutedTextOf(context),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    switch (role) {
+      case UserRole.faculty:
+        add(
+          'TEACHING',
+          'Your timetable',
+          'Classes assigned to you',
+          () => context.go('/timetable'),
+        );
+      case UserRole.hod:
+        add(
+          'DEPARTMENT',
+          'Computer Science',
+          'Teachers in the department',
+          () => context.push('/more/faculty'),
+        );
+        add(
+          'TEACHING',
+          'Your timetable',
+          'Classes assigned to you',
+          () => context.go('/timetable'),
+        );
+      case UserRole.principal:
+        add(
+          'CAMPUS',
+          collegeName,
+          'College profile',
+          () => context.push('/more/college'),
+        );
+        add(
+          'FACULTY',
+          'Department teachers',
+          'Computer Science faculty',
+          () => context.push('/more/faculty'),
+        );
+      case UserRole.collegeOffice:
+        add(
+          'FEES',
+          'Fee desk',
+          'Student dues and receipts',
+          () => context.push('/more/fees'),
+        );
+        add(
+          'LEAVE',
+          'Leave requests',
+          'Applications sent to the office',
+          () => context.push('/more/leave'),
+        );
+        add(
+          'CAMPUS',
+          collegeName,
+          'College profile',
+          () => context.push('/more/college'),
+        );
+      case UserRole.student:
+        break;
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: cards,
+    );
+  }
+}
+
 class _TodayRow extends StatelessWidget {
   const _TodayRow({required this.slot});
   final ClassSlot slot;
@@ -462,10 +581,7 @@ class _TodayRow extends StatelessWidget {
               const SizedBox(height: 2),
               Text(
                 '${slot.room} · ${slot.faculty}',
-                style: GoogleFonts.inter(
-                  fontSize: 12,
-                  color: muted,
-                ),
+                style: GoogleFonts.inter(fontSize: 12, color: muted),
               ),
             ],
           ),
@@ -528,10 +644,7 @@ class _NoticeRow extends StatelessWidget {
             const SizedBox(height: 4),
             Text(
               DateFormat('d MMM yyyy').format(notice.postedAt),
-              style: GoogleFonts.inter(
-                fontSize: 12,
-                color: faint,
-              ),
+              style: GoogleFonts.inter(fontSize: 12, color: faint),
             ),
           ],
         ),
