@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/models/models.dart';
 import '../../core/widgets/app_page_header.dart';
 import '../../core/widgets/soft_card.dart';
 import '../auth/auth_controller.dart';
@@ -12,8 +13,16 @@ class MoreScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final role = ref.watch(authControllerProvider).role;
     // Student More menu — order + hints match live demo /app/more.
+    // Principal and HOD also get the campus oversight lists.
     final items = <_MoreItem>[
+      if (role.watchesCampus) ...[
+        const _MoreItem(Icons.fact_check_outlined, 'Low attendance',
+            'Students below the 75% ANU line', '/low-attendance'),
+        const _MoreItem(Icons.event_available_outlined, 'Faculty on leave',
+            'Teachers away from class', '/faculty-leave'),
+      ],
       const _MoreItem(Icons.auto_awesome_outlined, 'Friday Skill',
           'Friday debate topics and Spotlight Hour', '/friday-skill'),
       const _MoreItem(Icons.note_alt_outlined, 'Notes & reminders',
@@ -22,8 +31,12 @@ class MoreScreen extends ConsumerWidget {
           'Classes, holidays and reminders', '/calendar'),
       const _MoreItem(Icons.photo_library_outlined, 'Gallery',
           'College celebrations & events', '/gallery'),
-      const _MoreItem(Icons.currency_rupee_rounded, 'Fees',
-          'Pay and view dues', '/fees'),
+      if (role.isStudent)
+        const _MoreItem(Icons.currency_rupee_rounded, 'Fees',
+            'Pay and view dues', '/fees'),
+      if (role.reviewsFeeDesk)
+        const _MoreItem(Icons.currency_rupee_rounded, 'Fees',
+            'Student dues and receipts', '/fees'),
       const _MoreItem(Icons.event_busy_outlined, 'Leave requests',
           'Apply and track', '/leave'),
       const _MoreItem(Icons.newspaper_outlined, 'Tech News',

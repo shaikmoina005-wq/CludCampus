@@ -839,6 +839,66 @@ class MockData {
     ),
   ];
 
+  /// Students under the ANU 75% line. Shown to the principal and HOD.
+  static const lowAttendance = <LowAttendanceStudent>[
+    LowAttendanceStudent(
+      name: 'Anitha P',
+      rollNo: 'Y22CS014',
+      programme: 'B.Sc Computer Science · I Year',
+      present: 21,
+      total: 36,
+      shortSubject: 'Programming in C',
+    ),
+    LowAttendanceStudent(
+      name: 'Sravani K',
+      rollNo: 'Y21CS062',
+      programme: 'B.Sc Computer Science · II Year A',
+      present: 26,
+      total: 42,
+      shortSubject: 'Object Oriented Programming',
+    ),
+    LowAttendanceStudent(
+      name: 'Mohammed Imran',
+      rollNo: 'Y23BCA021',
+      programme: 'B.C.A · III Year',
+      present: 30,
+      total: 44,
+      shortSubject: 'Computer Networks',
+    ),
+    LowAttendanceStudent(
+      name: 'Rahul Varma',
+      rollNo: 'Y21CS038',
+      programme: 'B.Sc Computer Science · II Year A',
+      present: 29,
+      total: 42,
+      shortSubject: 'Data Structures',
+    ),
+  ];
+
+  /// Faculty away from class around the current campus week.
+  static final facultyOnLeave = <FacultyLeave>[
+    FacultyLeave(
+      name: 'Ms Divya Sri',
+      designation: 'Assistant Professor',
+      department: 'Computer Science',
+      from: DateTime(2026, 11, 5),
+      to: DateTime(2026, 11, 7),
+      type: 'Casual',
+      note: 'DBMS periods covered by Ms Kavitha Rao',
+      initials: 'DS',
+    ),
+    FacultyLeave(
+      name: 'Mrs Swathi Devi',
+      designation: 'Lecturer',
+      department: 'Computer Science',
+      from: DateTime(2026, 11, 6),
+      to: DateTime(2026, 11, 6),
+      type: 'Sick',
+      note: 'Discrete Mathematics moved to Thursday',
+      initials: 'SD',
+    ),
+  ];
+
   static const courseYears = <CourseYear>[
     CourseYear(
       year: 'I Year',

@@ -112,63 +112,68 @@ class PageTitleBlock extends StatelessWidget {
     final navy = AppColors.primaryTextOf(context);
     final muted = AppColors.mutedTextOf(context);
 
-    return Padding(
-      padding: const EdgeInsets.only(top: 14, bottom: 8),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          if (showBack)
-            Padding(
-              // Title copy stays inset. Only the back control sits in the corner.
-              padding: const EdgeInsets.only(left: 2),
-              child: IconButton(
-                tooltip: 'Back',
-                padding: EdgeInsets.zero,
-                visualDensity: VisualDensity.compact,
-                constraints: const BoxConstraints(),
-                style: IconButton.styleFrom(
+    // Full width, matching More's stretched column. A centered parent
+    // would otherwise shrink this block and pull the chevron inward.
+    return SizedBox(
+      width: double.infinity,
+      child: Padding(
+        padding: const EdgeInsets.only(top: 14, bottom: 8),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (showBack)
+              Padding(
+                // Title copy stays inset. Only the back control sits in the corner.
+                padding: const EdgeInsets.only(left: 2),
+                child: IconButton(
+                  tooltip: 'Back',
                   padding: EdgeInsets.zero,
-                  minimumSize: Size.zero,
-                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  visualDensity: VisualDensity.compact,
+                  constraints: const BoxConstraints(),
+                  style: IconButton.styleFrom(
+                    padding: EdgeInsets.zero,
+                    minimumSize: Size.zero,
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  ),
+                  onPressed: () {
+                    if (context.canPop()) {
+                      context.pop();
+                    } else {
+                      context.go('/more');
+                    }
+                  },
+                  icon: Icon(Icons.chevron_left_rounded, color: navy, size: 28),
                 ),
-                onPressed: () {
-                  if (context.canPop()) {
-                    context.pop();
-                  } else {
-                    context.go('/more');
-                  }
-                },
-                icon: Icon(Icons.chevron_left_rounded, color: navy, size: 28),
               ),
-            ),
-          if (showBack) const SizedBox(height: 4),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20),
-            child: Text(
-              title,
-              style: GoogleFonts.inter(
-                fontSize: 28,
-                fontWeight: FontWeight.w500,
-                letterSpacing: -0.4,
-                color: navy,
-              ),
-            ),
-          ),
-          if (subtitle != null) ...[
-            const SizedBox(height: 4),
+            if (showBack) const SizedBox(height: 4),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20),
               child: Text(
-                subtitle!,
+                title,
                 style: GoogleFonts.inter(
-                  fontSize: 14,
-                  color: muted,
-                  height: 1.35,
+                  fontSize: 28,
+                  fontWeight: FontWeight.w500,
+                  letterSpacing: -0.4,
+                  color: navy,
                 ),
               ),
             ),
+            if (subtitle != null) ...[
+              const SizedBox(height: 4),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: Text(
+                  subtitle!,
+                  style: GoogleFonts.inter(
+                    fontSize: 14,
+                    color: muted,
+                    height: 1.35,
+                  ),
+                ),
+              ),
+            ],
           ],
-        ],
+        ),
       ),
     );
   }

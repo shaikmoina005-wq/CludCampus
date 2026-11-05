@@ -500,6 +500,18 @@ class _StaffHomeCards extends StatelessWidget {
           () => context.push('/more/faculty'),
         );
         add(
+          'ATTENDANCE',
+          'Low attendance',
+          '${MockData.lowAttendance.length} students below the 75% line',
+          () => context.push('/more/low-attendance'),
+        );
+        add(
+          'LEAVE',
+          'Faculty on leave',
+          '${MockData.facultyOnLeave.length} teachers away from class',
+          () => context.push('/more/faculty-leave'),
+        );
+        add(
           'TEACHING',
           'Your timetable',
           'Classes assigned to you',
@@ -511,6 +523,18 @@ class _StaffHomeCards extends StatelessWidget {
           collegeName,
           'College profile',
           () => context.push('/more/college'),
+        );
+        add(
+          'ATTENDANCE',
+          'Low attendance',
+          '${MockData.lowAttendance.length} students below the 75% line',
+          () => context.push('/more/low-attendance'),
+        );
+        add(
+          'LEAVE',
+          'Faculty on leave',
+          '${MockData.facultyOnLeave.length} teachers away from class',
+          () => context.push('/more/faculty-leave'),
         );
         add(
           'FACULTY',
