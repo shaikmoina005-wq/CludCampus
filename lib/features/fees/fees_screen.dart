@@ -6,6 +6,7 @@ import '../../core/constants/app_colors.dart';
 import '../../core/models/models.dart';
 import '../../core/widgets/app_page_header.dart';
 import '../../core/widgets/soft_card.dart';
+import '../auth/auth_controller.dart';
 import 'fee_payments_controller.dart';
 import 'payment_service.dart';
 import 'receipt_screen.dart';
@@ -59,15 +60,19 @@ class FeesScreen extends ConsumerWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final navy = isDark ? AppColors.darkTextPrimary : AppColors.navy;
     final muted = isDark ? AppColors.darkTextMuted : AppColors.textMuted;
+    final canPay = ref.watch(authControllerProvider).role.isStudent;
 
     return Scaffold(
       body: SafeArea(
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             const AppPageHeader(title: 'CludCampus'),
-            const PageTitleBlock(
+            PageTitleBlock(
               title: 'Fees',
-              subtitle: 'Academic year 2026–27',
+              subtitle: canPay
+                  ? 'Academic year 2026–27'
+                  : 'Student dues and receipts',
               showBack: true,
             ),
             Expanded(
@@ -99,7 +104,7 @@ class FeesScreen extends ConsumerWidget {
                               style: GoogleFonts.inter(
                                   fontWeight: FontWeight.w600,
                                   color: AppColors.success))
-                        else
+                        else if (canPay)
                           FilledButton.icon(
                             style: FilledButton.styleFrom(
                               backgroundColor: AppColors.brandBlue,
@@ -109,8 +114,13 @@ class FeesScreen extends ConsumerWidget {
                             onPressed: () => payFees(context, ref, pending),
                             icon: const Icon(Icons.lock_rounded, size: 18),
                             label: Text('Pay total ${fmt.format(pendingTotal)}'),
+                          )
+                        else
+                          Text(
+                            'Student dues on file. Payment stays with the student.',
+                            style: GoogleFonts.inter(fontSize: 13, color: muted),
                           ),
-                        if (razorpayKeyId.isEmpty) ...[
+                        if (canPay && razorpayKeyId.isEmpty) ...[
                           const SizedBox(height: 6),
                           Text('Demo mode — payments are simulated',
                               style: GoogleFonts.inter(fontSize: 11, color: muted)),
@@ -127,6 +137,7 @@ class FeesScreen extends ConsumerWidget {
                         fmt: fmt,
                         navy: navy,
                         muted: muted,
+                        canPay: canPay,
                         onPay: () => payFees(context, ref, [item]),
                       ),
                     ),
@@ -184,6 +195,7 @@ class _FeeRow extends StatelessWidget {
     required this.fmt,
     required this.navy,
     required this.muted,
+    required this.canPay,
     required this.onPay,
   });
   final VoidCallback onPay;
@@ -191,6 +203,7 @@ class _FeeRow extends StatelessWidget {
   final NumberFormat fmt;
   final Color navy;
   final Color muted;
+  final bool canPay;
 
   @override
   Widget build(BuildContext context) {
@@ -225,6 +238,14 @@ class _FeeRow extends StatelessWidget {
               style: GoogleFonts.inter(
                 fontWeight: FontWeight.w700,
                 color: AppColors.success,
+              ),
+            )
+          else if (!canPay)
+            Text(
+              'Due',
+              style: GoogleFonts.inter(
+                fontWeight: FontWeight.w700,
+                color: AppColors.warning,
               ),
             )
           else

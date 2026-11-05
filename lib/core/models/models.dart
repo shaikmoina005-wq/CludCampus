@@ -15,6 +15,15 @@ extension UserRoleX on UserRole {
         return 'College Office';
     }
   }
+
+  /// Personal attendance and Pay now belong to the signed-in student.
+  bool get isStudent => this == UserRole.student;
+
+  /// Principal and HOD review shortage and which faculty are away.
+  bool get watchesCampus => this == UserRole.principal || this == UserRole.hod;
+
+  /// The office looks at dues. They do not pay as if they were a student.
+  bool get reviewsFeeDesk => this == UserRole.collegeOffice;
 }
 
 class CollegeInfo {
@@ -373,4 +382,56 @@ class CalendarDayInfo {
   final String label;
   final bool isHoliday;
   final bool hasReminder;
+}
+
+/// A student the principal or HOD should notice for attendance shortage.
+class LowAttendanceStudent {
+  const LowAttendanceStudent({
+    required this.name,
+    required this.rollNo,
+    required this.programme,
+    required this.present,
+    required this.total,
+    required this.shortSubject,
+  });
+
+  final String name;
+  final String rollNo;
+  final String programme;
+  final int present;
+  final int total;
+  final String shortSubject;
+
+  double get percent => total == 0 ? 0 : (present / total) * 100;
+
+  String get initials {
+    final parts = name.trim().split(RegExp(r'\s+'));
+    if (parts.length >= 2) {
+      return '${parts.first[0]}${parts.last[0]}'.toUpperCase();
+    }
+    return name.isNotEmpty ? name[0].toUpperCase() : '?';
+  }
+}
+
+/// A teacher away from class, shown to the principal and HOD.
+class FacultyLeave {
+  const FacultyLeave({
+    required this.name,
+    required this.designation,
+    required this.department,
+    required this.from,
+    required this.to,
+    required this.type,
+    required this.note,
+    required this.initials,
+  });
+
+  final String name;
+  final String designation;
+  final String department;
+  final DateTime from;
+  final DateTime to;
+  final String type;
+  final String note;
+  final String initials;
 }

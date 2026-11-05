@@ -1,7 +1,7 @@
 name: cludcampus
 description: CludCampus — college companion Android MVP for Indian degree campuses.
 publish_to: 'none'
-version: 1.1.6+11
+version: 1.1.7+12
 
 environment:
   sdk: ^3.13.4

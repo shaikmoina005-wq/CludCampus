@@ -105,7 +105,8 @@ class CampusDrawer extends ConsumerWidget {
             ),
             const Divider(),
             item(Icons.home_outlined, 'Home', '/home'),
-            item(Icons.fact_check_outlined, 'Attendance', '/attendance'),
+            if (auth.initialized && auth.role.isStudent)
+              item(Icons.fact_check_outlined, 'Attendance', '/attendance'),
             item(Icons.schedule_outlined, 'Timetable', '/timetable'),
             item(Icons.article_outlined, 'Notices', '/notices'),
             item(Icons.grid_view_outlined, 'More', '/more'),
